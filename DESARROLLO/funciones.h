@@ -2,5 +2,10 @@
 #define FUNCIONES_H_INCLUDED
 
 
+// Convención nombre de funciones : primer palabra en minuscula, la siguiente empiezan con mayuscula.
+
+char decodificarDigito(char c);
+void decodificarFecha(const char *fechaE, char *fechaS);
+void mostrarPalabra(const char *p);
 
 #endif // FUNCIONES_H_INCLUDED
