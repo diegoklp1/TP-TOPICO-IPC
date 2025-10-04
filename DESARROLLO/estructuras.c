@@ -9,5 +9,5 @@ typedef struct {
     double variacion_mensual;  
     double variacion_interanual; 
     char region[10];           
-    char periodo[7];           // formato AAAAMM, 6 dígitos
+    int periodo;           // formato AAAAMM, 6 dígitos
 } RegistroIPC;

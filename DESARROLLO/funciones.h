@@ -1,6 +1,7 @@
 #ifndef FUNCIONES_H_INCLUDED
 #define FUNCIONES_H_INCLUDED
 
+#include "estructuras.c"
 
 // Convención nombre de funciones : primer palabra en minuscula, la siguiente empiezan con mayuscula.
 
