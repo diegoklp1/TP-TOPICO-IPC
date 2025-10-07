@@ -6,7 +6,7 @@
 // Convención nombre de funciones : primer palabra en minuscula, la siguiente empiezan con mayuscula.
 
 char decodificarDigito(char c);
-void decodificarFecha(const char *fechaE, char *fechaS);
+int decodificarFecha(int fechaE);
 void mostrarPalabra(const char *p);
 
 #endif // FUNCIONES_H_INCLUDED

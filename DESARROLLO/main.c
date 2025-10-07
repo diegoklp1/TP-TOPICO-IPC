@@ -1,23 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <stdbool.h>
 #include "funciones.h"
 
 int leerRegistroIPC(FILE *archivo, RegistroIPC *registro);
 
 int main(void) {
-    //char periodoCod[] = "749681";
-    //char periodoDec[7];
-
+    int periodoCod = 979547;
+    int periodoDec;
+    // LEER REGISTRO DE CSV
     FILE *archivo_ipc = fopen("serie_ipc_divisiones.csv", "r");
     if (archivo_ipc == NULL) {
         perror("Error al abrir el archivo");
         return 1;
     }
-
     char buffer_encabezado[256];
     fgets(buffer_encabezado, sizeof(buffer_encabezado), archivo_ipc);
+
 
     RegistroIPC ra;
     int i =0;
@@ -28,7 +28,9 @@ int main(void) {
     }
 
     fclose(archivo_ipc);
-    //decodificarFecha(periodoCod, periodoDec);
+    
+    periodoDec = decodificarFecha(periodoCod);
+    printf("%d",periodoDec);
     //mostrarPalabra(periodoDec);
 
     return 0;
@@ -112,6 +114,8 @@ int leerRegistroIPC(FILE *archivo, RegistroIPC *registro) {
 }
 
 
+// 1 : DECODIFICAR FECHA
+
 char decodificarDigito(char c) {
     switch (c) {
         case '7': return '0';
@@ -127,19 +131,35 @@ char decodificarDigito(char c) {
     }
 }
 
-void decodificarFecha(const char *fechaE, char *fechaS ) {
+int decodificarFecha(int fecha_codif) {
 
-    const char *i = fechaE;
-    char *j = fechaS;
+    char stringFechaCodif[10];
+    char stringFechaDecodif[10];
+
+    sprintf(stringFechaCodif,"%d",fecha_codif);
+
+    const char *i = stringFechaCodif;
+    char *j = stringFechaDecodif;
 
     while (*i != '\0') {
         *j++ = decodificarDigito(*i++);
     }
     *j = '\0';
+
+    return atoi(stringFechaDecodif);
 }
+
+// 2 : CONVERTIR FECHA DE NUMERO A CADENA
+
+void convertirFecha(){
+
+}
+
+
 
 void mostrarPalabra(const char *p) {
     while (*p)
         putchar(*p++);
     putchar('\n');
 }
+
