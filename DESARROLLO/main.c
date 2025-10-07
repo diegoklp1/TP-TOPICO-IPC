@@ -23,15 +23,22 @@ int main(void) {
     int i =0;
     while (i<100) {
         leerRegistroIPC(archivo_ipc, &ra);
-        printf("Registro %4d -> Descripcion: %60s, Region: %30s, Indice: %10.2f\n",ra.descripcion,ra.region,ra.indice_ipc);
+        printf("Registro %4d -> Descripcion: %60s, Region: %30s, Indice: %10.2f\n",i,ra.descripcion,ra.region,ra.indice_ipc);
         i++;
     }
 
     fclose(archivo_ipc);
     
+
+    // Funciones
+    //1
     periodoDec = decodificarFecha(periodoCod);
-    printf("%d",periodoDec);
+    printf("\n%d",periodoDec);
     //mostrarPalabra(periodoDec);
+    //2
+    convertirFecha(periodoDec,ra.fecha_convertida);
+    mostrarPalabra(ra.fecha_convertida);
+
 
     return 0;
 }
@@ -127,6 +134,7 @@ char decodificarDigito(char c) {
         case '1': return '6';
         case '3': return '7';
         case '2': return '8';
+        case '5': return '5';
         default:  return '?';
     }
 }
@@ -151,13 +159,21 @@ int decodificarFecha(int fecha_codif) {
 
 // 2 : CONVERTIR FECHA DE NUMERO A CADENA
 
-void convertirFecha(){
+void convertirFecha(int fecha,char* fechaTexto){
+    char* meses[] = {"", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio","Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"};
 
+    int anio = fecha / 100;
+    int mes = fecha % 100;
+
+    if (mes >= 1 && mes <= 12) {
+        sprintf(fechaTexto, "%s - %d \0", meses[mes], anio);
+    } else {
+        sprintf(fechaTexto, "Fecha Invalida");
+    }
 }
 
-
-
 void mostrarPalabra(const char *p) {
+    printf("\n");
     while (*p)
         putchar(*p++);
     putchar('\n');
