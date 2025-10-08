@@ -37,6 +37,14 @@ int main(void) {
     strcpy(palabra,"HOLA MUNDO");
     normalizarDescripcion(palabra);
     mostrarPalabra(palabra);
+
+
+    double numero = 123.456;
+    char texto[50];
+
+    sprintf(texto, "%.3f", numero);
+    convertirComaAPunto(texto);
+    printf("Texto: %s\n", texto);
     return 0;
 }
 
@@ -187,5 +195,14 @@ void normalizarDescripcion(char *p) {
     while (*p) {
         *p = tolower(*p);
         p++;
+    }
+}
+
+void convertirComaAPunto(char *p) {
+    while (*p) {
+        if (*p == ',') {
+            *p = '.';
+        }
+        *p++;
     }
 }

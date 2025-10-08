@@ -10,6 +10,6 @@ int decodificarFecha(int fechaE);
 void mostrarPalabra(const char *p);
 void normalizarDescripcion(char *p);
 void convertirFecha(int fecha, char* fechaTexto);
-
+void convertirComaAPunto(char *p);
 
 #endif // FUNCIONES_H_INCLUDED
