@@ -8,5 +8,8 @@
 char decodificarDigito(char c);
 int decodificarFecha(int fechaE);
 void mostrarPalabra(const char *p);
+void normalizarDescripcion(char *p);
+void convertirFecha(int fecha, char* fechaTexto);
+
 
 #endif // FUNCIONES_H_INCLUDED

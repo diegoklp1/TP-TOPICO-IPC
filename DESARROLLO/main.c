@@ -1,7 +1,7 @@
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 #include "funciones.h"
 
 int leerRegistroIPC(FILE *archivo, RegistroIPC *registro);
@@ -10,6 +10,7 @@ int main(void) {
     int periodoCod = 979547;
     int periodoDec;
     // LEER REGISTRO DE CSV
+    /*
     FILE *archivo_ipc = fopen("serie_ipc_divisiones.csv", "r");
     if (archivo_ipc == NULL) {
         perror("Error al abrir el archivo");
@@ -17,18 +18,12 @@ int main(void) {
     }
     char buffer_encabezado[256];
     fgets(buffer_encabezado, sizeof(buffer_encabezado), archivo_ipc);
-
+    */
 
     RegistroIPC ra;
-    int i =0;
-    while (i<100) {
-        leerRegistroIPC(archivo_ipc, &ra);
-        printf("Registro %4d -> Descripcion: %60s, Region: %30s, Indice: %10.2f\n",i,ra.descripcion,ra.region,ra.indice_ipc);
-        i++;
-    }
 
-    fclose(archivo_ipc);
-    
+    /*fclose(archivo_ipc);*/
+
 
     // Funciones
     //1
@@ -38,10 +33,13 @@ int main(void) {
     //2
     convertirFecha(periodoDec,ra.fecha_convertida);
     mostrarPalabra(ra.fecha_convertida);
-
-
+    char palabra[20];
+    strcpy(palabra,"HOLA MUNDO");
+    normalizarDescripcion(palabra);
+    mostrarPalabra(palabra);
     return 0;
 }
+
 int leerRegistroIPC(FILE *archivo, RegistroIPC *registro) {
     char linea[256];
 
@@ -179,3 +177,15 @@ void mostrarPalabra(const char *p) {
     putchar('\n');
 }
 
+
+void normalizarDescripcion(char *p) {
+    if (*p) {
+        *p = toupper(*p);
+        p++;
+    }
+
+    while (*p) {
+        *p = tolower(*p);
+        p++;
+    }
+}
