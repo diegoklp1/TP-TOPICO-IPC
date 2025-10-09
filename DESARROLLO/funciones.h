@@ -12,4 +12,7 @@ void normalizarDescripcion(char *p);
 void convertirFecha(int fecha, char* fechaTexto);
 void convertirComaAPunto(char *p);
 
+void solicitarIngresoMonto(float *monto);
+void solicitarRegion(int *idRegion);
+
 #endif // FUNCIONES_H_INCLUDED

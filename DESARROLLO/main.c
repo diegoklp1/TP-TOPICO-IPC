@@ -10,7 +10,7 @@ int main(void) {
     int periodoCod = 979547;
     int periodoDec;
     // LEER REGISTRO DE CSV
-    /*
+
     FILE *archivo_ipc = fopen("serie_ipc_divisiones.csv", "r");
     if (archivo_ipc == NULL) {
         perror("Error al abrir el archivo");
@@ -18,33 +18,46 @@ int main(void) {
     }
     char buffer_encabezado[256];
     fgets(buffer_encabezado, sizeof(buffer_encabezado), archivo_ipc);
-    */
+
 
     RegistroIPC ra;
 
-    /*fclose(archivo_ipc);*/
+    leerRegistroIPC(archivo_ipc, &ra);
+    printf("Codigo: %s - Descripcion: %s - Indice IPC: %.2f\n - Periodo: %d\n", ra.codigo, ra.descripcion, ra.indice_ipc, ra.periodo);
 
+    //Ejercicio 1
+    periodoDec = decodificarFecha(ra.periodo);
+    printf("\nPeriodo decodificado: %d",periodoDec);
 
-    // Funciones
-    //1
-    periodoDec = decodificarFecha(periodoCod);
-    printf("\n%d",periodoDec);
-    //mostrarPalabra(periodoDec);
-    //2
+    //Ejercicio 2
     convertirFecha(periodoDec,ra.fecha_convertida);
     mostrarPalabra(ra.fecha_convertida);
-    char palabra[20];
-    strcpy(palabra,"HOLA MUNDO");
-    normalizarDescripcion(palabra);
-    mostrarPalabra(palabra);
+
+    //Ejercicio 3
+    normalizarDescripcion(ra.descripcion);
+    mostrarPalabra(ra.descripcion);
+
+    //Ejercicio 4
+    char stringIndice[6];
+    sprintf(stringIndice,"%f",ra.indice_ipc);
+    convertirComaAPunto(stringIndice);
+    mostrarPalabra(stringIndice);
+
+    //Ejercicio 5
+    float monto;
+    solicitarIngresoMonto(&monto);
+    printf("%f", monto);
+
+    int idRegion;
+    solicitarRegion(&idRegion);
+    printf("%d", idRegion);
 
 
-    double numero = 123.456;
-    char texto[50];
 
-    sprintf(texto, "%.3f", numero);
-    convertirComaAPunto(texto);
-    printf("Texto: %s\n", texto);
+
+    fclose(archivo_ipc);
+
+
     return 0;
 }
 
@@ -121,12 +134,25 @@ int leerRegistroIPC(FILE *archivo, RegistroIPC *registro) {
     p_ini = p_fin + 1;
 
     // periodo
+    // limpiar saltos de línea y espacios
+    int len = strlen(p_ini);
+    while (len > 0 && (p_ini[len-1] == '\n' || p_ini[len-1] == '\r' || p_ini[len-1] == ' ')) {
+        p_ini[len-1] = '\0';
+        len--;
+    }
+
+    // quitar comillas si existen
+    if (p_ini[0] == '"' && p_ini[len-1] == '"') {
+        p_ini[len-1] = '\0';
+        p_ini++;
+    }
+
+    printf("Periodo limpio: '%s'\n", p_ini);
     registro->periodo = atoi(p_ini);
+
 
     return 1;
 }
-
-
 // 1 : DECODIFICAR FECHA
 
 char decodificarDigito(char c) {
@@ -140,7 +166,7 @@ char decodificarDigito(char c) {
         case '1': return '6';
         case '3': return '7';
         case '2': return '8';
-        case '5': return '5';
+        case '5': return '9';
         default:  return '?';
     }
 }
@@ -160,6 +186,7 @@ int decodificarFecha(int fecha_codif) {
     }
     *j = '\0';
 
+    printf("Fecha decodificada -> %s", stringFechaDecodif);
     return atoi(stringFechaDecodif);
 }
 
@@ -185,7 +212,6 @@ void mostrarPalabra(const char *p) {
     putchar('\n');
 }
 
-
 void normalizarDescripcion(char *p) {
     if (*p) {
         *p = toupper(*p);
@@ -205,4 +231,25 @@ void convertirComaAPunto(char *p) {
         }
         *p++;
     }
+}
+
+void solicitarIngresoMonto(float *monto) {
+    printf("Ingrese el monto a evaluar:");
+    scanf("%f", monto);
+}
+
+void solicitarRegion(int *idRegion) {
+    do {
+        printf("Ingrese la region:\n"
+           "1. Nacional\n"
+           "2. GBA\n"
+           "3. Pampeana\n"
+           "4. Cuyo\n"
+           "5. Noroeste\n"
+           "6. Noreste\n"
+           "7. Patagonia");
+        scanf("%d", idRegion);
+        if (*idRegion < 1 || *idRegion > 7)
+            printf("Valor invalido\n");
+    }while (*idRegion < 1 || *idRegion > 7);
 }
