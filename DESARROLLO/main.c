@@ -2,9 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "funciones.h"
 
-int leerRegistroIPC(FILE *archivo, RegistroIPC *registro);
+#include "funciones.h"
 
 int main(void) {
     int periodoDec;
@@ -52,92 +51,93 @@ int main(void) {
     return 0;
 }
 
-int leerRegistroIPC(FILE *archivo, RegistroIPC *registro) {
-    char linea[256];
-
-    if (fgets(linea, sizeof(linea), archivo) == NULL) {
-        return 0;
+bool leerArchivoCompletoIPC(char* nomArch)
+{
+    FILE* fpArch = fopen(nomArch, "r");
+    if (!fpArch)
+    {
+        puts("ERROR: No se pudo abrir el archivo.");
+        return false;
     }
 
-    char *p_ini = linea;
-    char *p_fin;
-    int longitud_campo;
+    char buffer[500];
+    // Se salta la línea del encabezado
+    fgets(buffer, sizeof(buffer), fpArch);
 
-    // codigo
-    p_fin = strchr(p_ini, ';');
-    if (!p_fin) return 0;
-    longitud_campo = p_fin - p_ini;
-    strncpy(registro->codigo, p_ini, longitud_campo);
-    registro->codigo[longitud_campo] = '\0';
-    p_ini = p_fin + 1;
-
-    // descripcion
-    p_fin = strchr(p_ini, ';');
-    if (!p_fin) return 0;
-    longitud_campo = p_fin - p_ini;
-    strncpy(registro->descripcion, p_ini, longitud_campo);
-    registro->descripcion[longitud_campo] = '\0';
-    limpiarCampo(registro->descripcion);
-    p_ini = p_fin + 1;
-
-    // clasificador
-    p_fin = strchr(p_ini, ';');
-    if (!p_fin) return 0;
-    longitud_campo = p_fin - p_ini;
-    strncpy(registro->clasificador, p_ini, longitud_campo);
-    registro->clasificador[longitud_campo] = '\0';
-    p_ini = p_fin + 1;
-
-    char buffer_temporal[64];
-
-    // indice
-    p_fin = strchr(p_ini, ';');
-    if (!p_fin) return 0;
-    longitud_campo = p_fin - p_ini;
-    strncpy(buffer_temporal, p_ini, longitud_campo);
-    buffer_temporal[longitud_campo] = '\0';
-    registro->indice_ipc = atof(buffer_temporal);
-    p_ini = p_fin + 1;
-
-    // variacion mensual
-    p_fin = strchr(p_ini, ';');
-    if (!p_fin) return 0;
-    longitud_campo = p_fin - p_ini;
-    strncpy(buffer_temporal, p_ini, longitud_campo);
-    buffer_temporal[longitud_campo] = '\0';
-    registro->variacion_mensual = atof(buffer_temporal);
-    p_ini = p_fin + 1;
-
-    // variacion interanual
-    p_fin = strchr(p_ini, ';');
-    if (!p_fin) return 0;
-    longitud_campo = p_fin - p_ini;
-    strncpy(buffer_temporal, p_ini, longitud_campo);
-    buffer_temporal[longitud_campo] = '\0';
-    registro->variacion_interanual = atof(buffer_temporal);
-    p_ini = p_fin + 1;
-
-    // region
-    p_fin = strchr(p_ini, ';');
-    if (!p_fin) return 0;
-    longitud_campo = p_fin - p_ini;
-    strncpy(registro->region, p_ini, longitud_campo);
-    registro->region[longitud_campo] = '\0';
-    limpiarCampo(registro->region);
-    p_ini = p_fin + 1;
-
-    int len = strlen(p_ini);
-    while (len > 0 && (p_ini[len-1] == '\n' || p_ini[len-1] == '\r' || p_ini[len-1] == ' ')) {
-        p_ini[len-1] = '\0'; len--;
+    RegistroIPC reg;
+    while (fgets(buffer, sizeof(buffer), fpArch))
+    {
+        if (trozarLineaIPC(buffer, &reg))
+        {
+            //mostrarRegistroIPC(reg);
+        }
+        else
+        {
+            //fprintf(stderr, "ADVERTENCIA: Línea con formato incorrecto omitida: %s", buffer);
+            puts("Linea Incorrecta");
+        }
     }
 
-    if (p_ini[0] == '"' && p_ini[len-1] == '"') {
-        p_ini[len-1] = '\0'; p_ini++;
+    fclose(fpArch);
+    return true;
+}
+
+bool trozarLineaIPC(char buffer[], RegistroIPC *registro)
+{
+    char* pos;
+    pos = strchr(buffer, '\n');
+    if (!pos) {
+        return false;
     }
 
-    registro->periodo = atoi(p_ini);
+    *pos = '\0';
+    //periodo
+    pos = strrchr(buffer, ';');
+    if (!pos)
+        return false;
+    registro->periodo = atoi(pos + 1);
+    *pos = '\0';
 
-    return 1;
+    //region
+    pos = strrchr(buffer, ';');
+    if (!pos) return false;
+    strcpy(registro->region, pos + 1);
+    *pos = '\0';
+
+    //variacion_interanual
+    pos = strrchr(buffer, ';');
+    if (!pos) return false;
+    registro->variacion_interanual = atof(pos + 1);
+    *pos = '\0';
+
+    //variacion_mensual
+    pos = strrchr(buffer, ';');
+    if (!pos) return false;
+    registro->variacion_mensual = atof(pos + 1);
+    *pos = '\0';
+
+    //indice_ipc
+    pos = strrchr(buffer, ';');
+    if (!pos) return false;
+    registro->indice_ipc = atof(pos + 1);
+    *pos = '\0';
+
+    //clasificador
+    pos = strrchr(buffer, ';');
+    if (!pos) return false;
+    strcpy(registro->clasificador, pos + 1);
+    *pos = '\0';
+
+    //descripcion
+    pos = strrchr(buffer, ';');
+    if (!pos) return false;
+    strcpy(registro->descripcion, pos + 1);
+    *pos = '\0';
+
+    //codigo
+    strcpy(registro->codigo, buffer);
+
+    return true;
 }
 
 void limpiarCampo(char *campo) {
@@ -197,7 +197,7 @@ void convertirFecha(int fecha,char* fechaTexto){
     int mes = fecha % 100;
 
     if (mes >= 1 && mes <= 12) {
-        sprintf(fechaTexto, "%s - %d \0", meses[mes], anio);
+        sprintf(fechaTexto, "%s - %d", meses[mes], anio);
     } else {
         sprintf(fechaTexto, "Fecha Invalida");
     }
