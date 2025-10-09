@@ -7,10 +7,9 @@
 int leerRegistroIPC(FILE *archivo, RegistroIPC *registro);
 
 int main(void) {
-    int periodoCod = 979547;
     int periodoDec;
-    // LEER REGISTRO DE CSV
 
+    // LEER REGISTRO DE CSV
     FILE *archivo_ipc = fopen("serie_ipc_divisiones.csv", "r");
     if (archivo_ipc == NULL) {
         perror("Error al abrir el archivo");
@@ -43,17 +42,9 @@ int main(void) {
     convertirComaAPunto(stringIndice);
     mostrarPalabra(stringIndice);
 
+
     //Ejercicio 5
-    float monto;
-    solicitarIngresoMonto(&monto);
-    printf("%f", monto);
-
-    int idRegion;
-    solicitarRegion(&idRegion);
-    printf("%d", idRegion);
-
-
-
+    calcularMontoAjustadoPorIPC(archivo_ipc);
 
     fclose(archivo_ipc);
 
@@ -86,6 +77,7 @@ int leerRegistroIPC(FILE *archivo, RegistroIPC *registro) {
     longitud_campo = p_fin - p_ini;
     strncpy(registro->descripcion, p_ini, longitud_campo);
     registro->descripcion[longitud_campo] = '\0';
+    limpiarCampo(registro->descripcion);
     p_ini = p_fin + 1;
 
     // clasificador
@@ -131,30 +123,38 @@ int leerRegistroIPC(FILE *archivo, RegistroIPC *registro) {
     longitud_campo = p_fin - p_ini;
     strncpy(registro->region, p_ini, longitud_campo);
     registro->region[longitud_campo] = '\0';
+    limpiarCampo(registro->region);
     p_ini = p_fin + 1;
 
-    // periodo
-    // limpiar saltos de línea y espacios
     int len = strlen(p_ini);
     while (len > 0 && (p_ini[len-1] == '\n' || p_ini[len-1] == '\r' || p_ini[len-1] == ' ')) {
-        p_ini[len-1] = '\0';
-        len--;
+        p_ini[len-1] = '\0'; len--;
     }
 
-    // quitar comillas si existen
     if (p_ini[0] == '"' && p_ini[len-1] == '"') {
-        p_ini[len-1] = '\0';
-        p_ini++;
+        p_ini[len-1] = '\0'; p_ini++;
     }
 
-    printf("Periodo limpio: '%s'\n", p_ini);
     registro->periodo = atoi(p_ini);
-
 
     return 1;
 }
-// 1 : DECODIFICAR FECHA
 
+void limpiarCampo(char *campo) {
+    int len = strlen(campo);
+
+    while (len > 0 && (campo[len-1] == '\n' || campo[len-1] == '\r' || campo[len-1] == ' ')) {
+        campo[len-1] = '\0';
+        len--;
+    }
+
+    if (len > 1 && campo[0] == '"' && campo[len-1] == '"') {
+        campo[len-1] = '\0';
+        memmove(campo, campo + 1, strlen(campo + 1) + 1);
+    }
+}
+
+// 1 : DECODIFICAR FECHA
 char decodificarDigito(char c) {
     switch (c) {
         case '7': return '0';
@@ -172,11 +172,10 @@ char decodificarDigito(char c) {
 }
 
 int decodificarFecha(int fecha_codif) {
+    char stringFechaCodif[16];
+    char stringFechaDecodif[16];
 
-    char stringFechaCodif[10];
-    char stringFechaDecodif[10];
-
-    sprintf(stringFechaCodif,"%d",fecha_codif);
+    sprintf(stringFechaCodif, "%d", fecha_codif);
 
     const char *i = stringFechaCodif;
     char *j = stringFechaDecodif;
@@ -186,12 +185,11 @@ int decodificarFecha(int fecha_codif) {
     }
     *j = '\0';
 
-    printf("Fecha decodificada -> %s", stringFechaDecodif);
+    printf("Fecha decodificada -> %s\n", stringFechaDecodif);
     return atoi(stringFechaDecodif);
 }
 
 // 2 : CONVERTIR FECHA DE NUMERO A CADENA
-
 void convertirFecha(int fecha,char* fechaTexto){
     char* meses[] = {"", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio","Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"};
 
@@ -212,6 +210,7 @@ void mostrarPalabra(const char *p) {
     putchar('\n');
 }
 
+// 3: Normalizar descripción
 void normalizarDescripcion(char *p) {
     if (*p) {
         *p = toupper(*p);
@@ -224,6 +223,7 @@ void normalizarDescripcion(char *p) {
     }
 }
 
+// 4: Convertir coma a punto
 void convertirComaAPunto(char *p) {
     while (*p) {
         if (*p == ',') {
@@ -233,12 +233,45 @@ void convertirComaAPunto(char *p) {
     }
 }
 
-void solicitarIngresoMonto(float *monto) {
-    printf("Ingrese el monto a evaluar:");
-    scanf("%f", monto);
+// 5: Cálculo del monto ajustado por IPC
+void calcularMontoAjustadoPorIPC(FILE *archivo_ipc) {
+    float monto;
+    char region[10];
+    int fechaInicio, fechaFin;
+    double ipcInicio= 0, ipcFin= 0;
+
+    //Solicitamos los datos necesarios
+    solicitarMonto(&monto);
+    solicitarRegion(region);
+    solicitarPeriodos(&fechaInicio, &fechaFin);
+
+    RegistroIPC ra;
+
+    //Buscamos los IPCs
+    buscarIPCs(archivo_ipc, region, fechaInicio, fechaFin, &ipcInicio, &ipcFin, ra);
+
+
+    //Informamos los resultados
+    if (ipcInicio == 0 || ipcFin == 0) {
+        printf("No se encontraron los datos del IPC");
+    }else {
+        printf("Monto inicial: %2.f | Monto ajustado: %2.f\n", monto, monto * (ipcFin / ipcInicio));
+
+        printf("Variacion porcentual: %2.f\n", (ipcFin / ipcInicio - 1) * 100);
+    }
+
+    //Regresamos el archivo al inicio
+    rewind(archivo_ipc);
 }
 
-void solicitarRegion(int *idRegion) {
+void solicitarMonto(float *monto) {
+    printf("Ingrese el monto a evaluar:");
+    scanf("%f", monto);
+    fflush(stdin);
+}
+
+void solicitarRegion(char *region) {
+    int idRegion;
     do {
         printf("Ingrese la region:\n"
            "1. Nacional\n"
@@ -248,8 +281,39 @@ void solicitarRegion(int *idRegion) {
            "5. Noroeste\n"
            "6. Noreste\n"
            "7. Patagonia");
-        scanf("%d", idRegion);
-        if (*idRegion < 1 || *idRegion > 7)
+        scanf("%d", &idRegion);
+        fflush(stdin);
+        if (idRegion < 1 || idRegion > 7)
             printf("Valor invalido\n");
-    }while (*idRegion < 1 || *idRegion > 7);
+    }while (idRegion < 1 || idRegion > 7);
+
+    switch (idRegion) {
+        case 1: strcpy(region, "Nacional"); break;
+        case 2: strcpy(region, "GBA"); break;
+        case 3: strcpy(region, "Pampeana"); break;
+        case 4: strcpy(region, "Cuyo"); break;
+        case 5: strcpy(region, "Noroeste"); break;
+        case 6: strcpy(region, "Noreste"); break;
+        case 7: strcpy(region, "Patagonia"); break;
+        default: strcpy(region, "Invalido"); break;
+    }
+}
+
+void solicitarPeriodos(int *fecha_inicio, int *fecha_fin) {
+    printf("Ingrese la fecha de inicio con formato aaaamm: ");
+    scanf("%d", fecha_inicio);
+    printf("Ingrese la fecha de fin con formato aaaamm: ");
+    scanf("%d", fecha_fin);
+}
+
+void buscarIPCs(FILE *archivo_ipc, char region[10], int fechaInicio, int fechaFin, double *ipcInicio, double *ipcFin, RegistroIPC ra) {
+    while (leerRegistroIPC(archivo_ipc, &ra) && (*ipcInicio == 0 || *ipcFin == 0)) {
+        if (strcmpi(ra.descripcion, "nivel general") == 0 && strcmpi(ra.region, region) == 0) {
+            if (fechaInicio == decodificarFecha(ra.periodo)) {
+                *ipcInicio = ra.indice_ipc;
+            }else if (fechaFin == decodificarFecha(ra.periodo)) {
+                *ipcFin = ra.indice_ipc;
+            }
+        }
+    }
 }
