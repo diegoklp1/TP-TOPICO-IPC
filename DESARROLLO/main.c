@@ -14,33 +14,6 @@ int main(void) {
         perror("Error al abrir el archivo");
         return 1;
     }
-    char buffer_encabezado[256];
-    fgets(buffer_encabezado, sizeof(buffer_encabezado), archivo_ipc);
-
-
-    RegistroIPC ra;
-
-    leerRegistroIPC(archivo_ipc, &ra);
-    printf("Codigo: %s - Descripcion: %s - Indice IPC: %.2f\n - Periodo: %d\n", ra.codigo, ra.descripcion, ra.indice_ipc, ra.periodo);
-
-    //Ejercicio 1
-    periodoDec = decodificarFecha(ra.periodo);
-    printf("\nPeriodo decodificado: %d",periodoDec);
-
-    //Ejercicio 2
-    convertirFecha(periodoDec,ra.fecha_convertida);
-    mostrarPalabra(ra.fecha_convertida);
-
-    //Ejercicio 3
-    normalizarDescripcion(ra.descripcion);
-    mostrarPalabra(ra.descripcion);
-
-    //Ejercicio 4
-    char stringIndice[6];
-    sprintf(stringIndice,"%f",ra.indice_ipc);
-    convertirComaAPunto(stringIndice);
-    mostrarPalabra(stringIndice);
-
 
     //Ejercicio 5
     calcularMontoAjustadoPorIPC(archivo_ipc);
@@ -103,12 +76,15 @@ bool trozarLineaIPC(char buffer[], RegistroIPC *registro)
     pos = strrchr(buffer, ';');
     if (!pos)
         return false;
+    limpiarCampo(pos+1);
     registro->periodo = atoi(pos + 1);
+
     *pos = '\0';
 
     //region
     pos = strrchr(buffer, ';');
     if (!pos) return false;
+    limpiarCampo(pos+1);
     strcpy(registro->region, pos + 1);
     *pos = '\0';
 
@@ -139,6 +115,7 @@ bool trozarLineaIPC(char buffer[], RegistroIPC *registro)
     //descripcion
     pos = strrchr(buffer, ';');
     if (!pos) return false;
+    limpiarCampo(pos+1);
     strcpy(registro->descripcion, pos + 1);
     *pos = '\0';
 
@@ -255,18 +232,27 @@ void calcularMontoAjustadoPorIPC(FILE *archivo_ipc) {
     solicitarFecha(&fechaFin);
 
     RegistroIPC ra;
+    char buffer[500];
+    // Se salta la línea del encabezado
+    fgets(buffer, sizeof(buffer), archivo_ipc);
 
     //Buscamos los IPCs
-    buscarIPCs(archivo_ipc, region, fechaInicio, fechaFin, &ipcInicio, &ipcFin, ra);
-
+    while (fgets(buffer, sizeof(buffer), archivo_ipc) && (ipcInicio == 0 || ipcFin == 0)) {
+        if (trozarLineaIPC(buffer, &ra) && strcmpi(ra.descripcion, "nivel general") == 0 && strcmpi(ra.region, region) == 0) {
+            if (fechaInicio == decodificarFecha(ra.periodo))
+                ipcInicio = ra.indice_ipc;
+            else if (fechaFin == decodificarFecha(ra.periodo))
+                ipcFin = ra.indice_ipc;
+        }
+    }
 
     //Informamos los resultados
     if (ipcInicio == 0 || ipcFin == 0) {
         printf("No se encontraron los datos del IPC");
     }else {
-        printf("Monto inicial: %2.f | Monto ajustado: %2.f\n", monto, monto * (ipcFin / ipcInicio));
+        printf("Monto inicial: %.2f | Monto ajustado: %.2f\n", monto, monto * (ipcFin / ipcInicio));
 
-        printf("Variacion porcentual: %2.f\n", (ipcFin / ipcInicio - 1) * 100);
+        printf("Variacion porcentual: %.2f\n", (ipcFin / ipcInicio - 1) * 100);
     }
 
     //Regresamos el archivo al inicio
@@ -311,16 +297,4 @@ void solicitarRegion(char *region) {
 void solicitarFecha(int *fecha) {
     printf("Ingrese la fecha con formato aaaamm: ");
     scanf("%d", fecha);
-}
-
-void buscarIPCs(FILE *archivo_ipc, char region[10], int fechaInicio, int fechaFin, double *ipcInicio, double *ipcFin, RegistroIPC ra) {
-    while (leerRegistroIPC(archivo_ipc, &ra) && (*ipcInicio == 0 || *ipcFin == 0)) {
-        if (strcmpi(ra.descripcion, "nivel general") == 0 && strcmpi(ra.region, region) == 0) {
-            if (fechaInicio == decodificarFecha(ra.periodo)) {
-                *ipcInicio = ra.indice_ipc;
-            }else if (fechaFin == decodificarFecha(ra.periodo)) {
-                *ipcFin = ra.indice_ipc;
-            }
-        }
-    }
 }

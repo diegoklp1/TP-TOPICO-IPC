@@ -23,7 +23,6 @@ void convertirComaAPunto(char *p);
 //5
 void calcularMontoAjustadoPorIPC(FILE *archivo_ipc);
 
-void buscarIPCs(FILE *archivo_ipc, char region[10], int fechaInicio, int fechaFin, double *ipcInicio, double *ipcFin, RegistroIPC ra);
 
 void solicitarMonto(float *monto);
 
