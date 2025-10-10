@@ -6,7 +6,6 @@
 #include "funciones.h"
 
 int main(void) {
-    int periodoDec;
 
     // LEER REGISTRO DE CSV
     FILE *archivo_ipc = fopen("serie_ipc_divisiones.csv", "r");
@@ -15,9 +14,6 @@ int main(void) {
         return 1;
     }
 
-    //Ejercicio 5
-    calcularMontoAjustadoPorIPC(archivo_ipc);
-
     //Ejercicio 6
 
     //Ejercicio 7
@@ -25,6 +21,9 @@ int main(void) {
     //Ejercicio 8
 
     //Ejercicio 9
+    Vector vector;
+    vectorCrear(&vector, sizeof(Clasificacion));
+    calcularIPCPorGrupos(archivo_ipc, &vector);
 
     fclose(archivo_ipc);
 
@@ -297,4 +296,143 @@ void solicitarRegion(char *region) {
 void solicitarFecha(int *fecha) {
     printf("Ingrese la fecha con formato aaaamm: ");
     scanf("%d", fecha);
+}
+
+void calcularIPCPorGrupos(FILE *archivo_ipc, Vector* grupos) {
+    char buffer[500];
+    fgets(buffer, sizeof(buffer), archivo_ipc);
+    RegistroIPC ra;
+    Clasificacion clasificacion;
+    while (fgets(buffer, sizeof(buffer), archivo_ipc)) {
+        if (trozarLineaIPC(buffer, &ra)) {
+            if (strcmpi(ra.region, "nacional") == 0) {
+                clasificacion.periodo = decodificarFecha(ra.periodo);
+                convertirFecha(clasificacion.periodo, clasificacion.fecha);
+                strcpy(clasificacion.descripcion, ra.descripcion);
+                clasificacion.indice_ipc = ra.indice_ipc;
+                strcpy(clasificacion.region, ra.region);
+                clasificarGrupo(ra.descripcion, clasificacion.grupo);
+
+                vectorInsertar(grupos, &clasificacion);
+            }
+        }
+    }
+    mostrarPromedios(grupos);
+
+    rewind(archivo_ipc);
+}
+
+void clasificarGrupo(const char* descripcion, char *grupo) {
+    if (strcmpi(descripcion, "alimentos y bebidas no alcohólicas") == 0 ||
+        strcmpi(descripcion, "bebidas alcohólicas y tabaco") == 0 ||
+        strcmpi(descripcion, "prendas de vestir y calzado") == 0 ||
+        strcmpi(descripcion, "bienes y servicios varios") == 0 ||
+        strcmpi(descripcion, "equipamiento y mantenimiento del hogar") == 0) {
+        strcpy(grupo, "Bienes");
+    } else if (strcmpi(descripcion, "recreación y cultura") == 0 ||
+        strcmpi(descripcion, "restaurantes y hoteles") == 0 ||
+        strcmpi(descripcion, "salud") == 0 ||
+        strcmpi(descripcion, "transporte") == 0 ||
+        strcmpi(descripcion, "educación") == 0 ||
+        strcmpi(descripcion, "comunicación") == 0 ||
+        strcmpi(descripcion, "vivienda, agua, electricidad, gas y otros combustibles") == 0) {
+        strcpy(grupo, "Servicios");
+    } else {
+        strcpy(grupo, "Otro");
+    }
+}
+
+void mostrarPromedios(Vector* grupos) {
+    int periodoActual = 0;
+    double sumaBienes = 0, sumaServicios = 0;
+    int cantBienes = 0, cantServicios = 0;
+
+    Clasificacion* clasificacion = grupos->vector;
+
+    for (size_t i = 0; i < grupos->cantidadElementos; i++) {
+        if (periodoActual != clasificacion[i].periodo && periodoActual != 0) {
+            printf("\nPeriodo %d -> Bienes: %.2f | Servicios: %.2f",
+                   periodoActual,
+                   cantBienes ? sumaBienes / cantBienes : 0,
+                   cantServicios ? sumaServicios / cantServicios : 0);
+
+            sumaBienes = sumaServicios = 0;
+            cantBienes = cantServicios = 0;
+        }
+
+        periodoActual = clasificacion[i].periodo;
+
+        if (strcmpi(clasificacion[i].grupo, "Bienes") == 0) {
+            sumaBienes += clasificacion[i].indice_ipc;
+            cantBienes++;
+        } else if (strcmpi(clasificacion[i].grupo, "Servicios") == 0) {
+            sumaServicios += clasificacion[i].indice_ipc;
+            cantServicios++;
+        }
+    }
+
+    if (cantBienes + cantServicios > 0) {
+        printf("\nPeriodo %d -> Bienes: %.2f | Servicios: %.2f\n",
+               periodoActual,
+               cantBienes ? sumaBienes / cantBienes : 0,
+               cantServicios ? sumaServicios / cantServicios : 0);
+    }
+}
+
+
+bool vectorCrear(Vector* vector, size_t tamanioElemento)
+{
+    vector->vector = malloc(tamanioElemento * 10);
+
+    if(!(vector->vector)){
+        vector->capacidad = 0;
+        return false;
+    }
+
+    vector->tamanioElemento = tamanioElemento;
+    vector->cantidadElementos = 0;
+    vector->capacidad = 10;
+
+    return true;
+}
+
+void vectorDestruir(Vector* vector)
+{
+    free(vector->vector);
+    vector->vector = NULL;
+    vector->tamanioElemento = 0;
+    vector->cantidadElementos = 0;
+    vector->capacidad = 0;
+}
+
+
+bool redimensionarVector(Vector* vector, size_t capacidad)
+{
+    int* vectorTemporal = realloc(vector->vector, capacidad * vector->tamanioElemento);
+
+    if(!(vectorTemporal)){
+        return false;
+    }
+
+    printf("Redimension de %llu a %llu\n", vector->capacidad, capacidad);
+
+    vector->vector = vectorTemporal;
+    vector->capacidad = capacidad;
+
+    return true;
+}
+
+int vectorInsertar(Vector* vector, void* elemento)
+{
+    if(vector->cantidadElementos == vector->capacidad){
+        if(!redimensionarVector(vector, vector->capacidad * 2)){
+            return 0;
+        }
+    }
+
+    memcpy((char*)vector->vector + vector->cantidadElementos * vector->tamanioElemento,
+           elemento, vector->tamanioElemento);
+    vector->cantidadElementos++;
+
+    return 1;
 }

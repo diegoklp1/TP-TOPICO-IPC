@@ -30,4 +30,15 @@ void solicitarRegion(char *region);
 
 void solicitarFecha(int *fecha_inicio);
 
+//6
+void calcularIPCPorGrupos(FILE *archivo_ipc, Vector* vector);
+void mostrarPromedios(Vector* vec);
+void clasificarGrupo(const char* descripcion, char *grupo);
+
+static bool redimensionarVector(Vector* vec, size_t cap);
+
+bool vectorCrear(Vector* vec, size_t tamElem);
+void vectorDestruir(Vector* vec);
+
+int vectorInsertar(Vector* vec, void* elem);
 #endif // FUNCIONES_H_INCLUDED
