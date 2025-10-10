@@ -12,4 +12,3 @@ typedef struct {
     int periodo;   // AAAAMM
     char fecha_convertida[30];
 } RegistroIPC;
-

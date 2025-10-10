@@ -46,6 +46,14 @@ int main(void) {
     //Ejercicio 5
     calcularMontoAjustadoPorIPC(archivo_ipc);
 
+    //Ejercicio 6
+
+    //Ejercicio 7
+
+    //Ejercicio 8
+
+    //Ejercicio 9
+
     fclose(archivo_ipc);
 
 
@@ -243,7 +251,8 @@ void calcularMontoAjustadoPorIPC(FILE *archivo_ipc) {
     //Solicitamos los datos necesarios
     solicitarMonto(&monto);
     solicitarRegion(region);
-    solicitarPeriodos(&fechaInicio, &fechaFin);
+    solicitarFecha(&fechaInicio);
+    solicitarFecha(&fechaFin);
 
     RegistroIPC ra;
 
@@ -299,11 +308,9 @@ void solicitarRegion(char *region) {
     }
 }
 
-void solicitarPeriodos(int *fecha_inicio, int *fecha_fin) {
-    printf("Ingrese la fecha de inicio con formato aaaamm: ");
-    scanf("%d", fecha_inicio);
-    printf("Ingrese la fecha de fin con formato aaaamm: ");
-    scanf("%d", fecha_fin);
+void solicitarFecha(int *fecha) {
+    printf("Ingrese la fecha con formato aaaamm: ");
+    scanf("%d", fecha);
 }
 
 void buscarIPCs(FILE *archivo_ipc, char region[10], int fechaInicio, int fechaFin, double *ipcInicio, double *ipcFin, RegistroIPC ra) {

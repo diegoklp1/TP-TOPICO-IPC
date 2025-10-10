@@ -14,9 +14,13 @@ void convertirFecha(int fecha, char* fechaTexto);
 void convertirComaAPunto(char *p);
 
 void calcularMontoAjustadoPorIPC(FILE *archivo_ipc);
+
 void buscarIPCs(FILE *archivo_ipc, char region[10], int fechaInicio, int fechaFin, double *ipcInicio, double *ipcFin, RegistroIPC ra);
+
 void solicitarMonto(float *monto);
+
 void solicitarRegion(char *region);
-void solicitarPeriodos(int *fecha_inicio, int *fecha_fin);
+
+void solicitarFecha(int *fecha_inicio);
 
 #endif // FUNCIONES_H_INCLUDED
