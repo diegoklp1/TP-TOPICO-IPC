@@ -13,6 +13,30 @@ int main(void) {
         perror("Error al abrir el archivo");
         return 1;
     }
+    //Variables de prueba
+    int periodoDec;
+    char buffer_encabezado[256];
+
+    //Lectura de registro de csv
+    fgets(buffer_encabezado, sizeof(buffer_encabezado), archivo_ipc);
+    RegistroIPC ra;
+    leerRegistroIPC(archivo_ipc, &ra);
+    printf("Codigo: %s - Descripcion: %s - Indice IPC: %.2f\n - Periodo: %d\n", ra.codigo, ra.descripcion, ra.indice_ipc, ra.periodo);
+
+    //Ejercicio 1
+    periodoDec = decodificarFecha(ra.periodo);
+    printf("\nPeriodo decodificado: %d",periodoDec);
+    //Ejercicio 2
+    convertirFecha(periodoDec,ra.fecha_convertida);
+    mostrarPalabra(ra.fecha_convertida);
+    //Ejercicio 3
+    normalizarDescripcion(ra.descripcion);
+    mostrarPalabra(ra.descripcion);
+    //Ejercicio 4
+    char stringIndice[6];
+    sprintf(stringIndice,"%f",ra.indice_ipc);
+    convertirComaAPunto(stringIndice);
+    mostrarPalabra(stringIndice);
 
     //Ejercicio 6
 
@@ -30,7 +54,35 @@ int main(void) {
 
     return 0;
 }
+bool leerRegistroIPC(char* nomArch, RegistroIPC* reg)
+{
+    FILE* fpArch = fopen(nomArch, "r");
+    if (!fpArch)
+    {
+        puts("ERROR: No se pudo abrir el archivo.");
+        return false;
+    }
 
+    char buffer[500];
+    // Se salta la línea del encabezado
+    fgets(buffer, sizeof(buffer), fpArch);
+
+    RegistroIPC reg;
+    fgets(buffer, sizeof(buffer), fpArch);
+    
+    if (trozarLineaIPC(buffer, &reg))
+    {
+        //mostrarRegistroIPC(reg);
+    }
+    else
+    {
+        //fprintf(stderr, "ADVERTENCIA: Línea con formato incorrecto omitida: %s", buffer);
+        puts("Linea Incorrecta");
+    }
+
+    fclose(fpArch);
+    return true;
+}
 bool leerArchivoCompletoIPC(char* nomArch)
 {
     FILE* fpArch = fopen(nomArch, "r");
@@ -136,6 +188,63 @@ void limpiarCampo(char *campo) {
         campo[len-1] = '\0';
         memmove(campo, campo + 1, strlen(campo + 1) + 1);
     }
+}
+
+bool vectorCrear(Vector* vector, size_t tamanioElemento)
+{
+    vector->vector = malloc(tamanioElemento * 10);
+
+    if(!(vector->vector)){
+        vector->capacidad = 0;
+        return false;
+    }
+
+    vector->tamanioElemento = tamanioElemento;
+    vector->cantidadElementos = 0;
+    vector->capacidad = 10;
+
+    return true;
+}
+
+void vectorDestruir(Vector* vector)
+{
+    free(vector->vector);
+    vector->vector = NULL;
+    vector->tamanioElemento = 0;
+    vector->cantidadElementos = 0;
+    vector->capacidad = 0;
+}
+
+
+bool redimensionarVector(Vector* vector, size_t capacidad)
+{
+    int* vectorTemporal = realloc(vector->vector, capacidad * vector->tamanioElemento);
+
+    if(!(vectorTemporal)){
+        return false;
+    }
+
+    printf("Redimension de %llu a %llu\n", vector->capacidad, capacidad);
+
+    vector->vector = vectorTemporal;
+    vector->capacidad = capacidad;
+
+    return true;
+}
+
+int vectorInsertar(Vector* vector, void* elemento)
+{
+    if(vector->cantidadElementos == vector->capacidad){
+        if(!redimensionarVector(vector, vector->capacidad * 2)){
+            return 0;
+        }
+    }
+
+    memcpy((char*)vector->vector + vector->cantidadElementos * vector->tamanioElemento,
+           elemento, vector->tamanioElemento);
+    vector->cantidadElementos++;
+
+    return 1;
 }
 
 // 1 : DECODIFICAR FECHA
@@ -322,6 +431,7 @@ void calcularIPCPorGrupos(FILE *archivo_ipc, Vector* grupos) {
     rewind(archivo_ipc);
 }
 
+// 6
 void clasificarGrupo(const char* descripcion, char *grupo) {
     if (strcmpi(descripcion, "alimentos y bebidas no alcohólicas") == 0 ||
         strcmpi(descripcion, "bebidas alcohólicas y tabaco") == 0 ||
@@ -379,60 +489,12 @@ void mostrarPromedios(Vector* grupos) {
     }
 }
 
+// 7
 
-bool vectorCrear(Vector* vector, size_t tamanioElemento)
-{
-    vector->vector = malloc(tamanioElemento * 10);
+// 8
+// Se reutiliza la función del punto 4
 
-    if(!(vector->vector)){
-        vector->capacidad = 0;
-        return false;
-    }
-
-    vector->tamanioElemento = tamanioElemento;
-    vector->cantidadElementos = 0;
-    vector->capacidad = 10;
-
-    return true;
-}
-
-void vectorDestruir(Vector* vector)
-{
-    free(vector->vector);
-    vector->vector = NULL;
-    vector->tamanioElemento = 0;
-    vector->cantidadElementos = 0;
-    vector->capacidad = 0;
-}
+// 9
 
 
-bool redimensionarVector(Vector* vector, size_t capacidad)
-{
-    int* vectorTemporal = realloc(vector->vector, capacidad * vector->tamanioElemento);
 
-    if(!(vectorTemporal)){
-        return false;
-    }
-
-    printf("Redimension de %llu a %llu\n", vector->capacidad, capacidad);
-
-    vector->vector = vectorTemporal;
-    vector->capacidad = capacidad;
-
-    return true;
-}
-
-int vectorInsertar(Vector* vector, void* elemento)
-{
-    if(vector->cantidadElementos == vector->capacidad){
-        if(!redimensionarVector(vector, vector->capacidad * 2)){
-            return 0;
-        }
-    }
-
-    memcpy((char*)vector->vector + vector->cantidadElementos * vector->tamanioElemento,
-           elemento, vector->tamanioElemento);
-    vector->cantidadElementos++;
-
-    return 1;
-}
