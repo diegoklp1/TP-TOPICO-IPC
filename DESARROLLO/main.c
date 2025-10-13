@@ -20,38 +20,44 @@ int main(void) {
     //Lectura de registro de csv
     fgets(buffer_encabezado, sizeof(buffer_encabezado), archivo_ipc);
     RegistroIPC ra;
-    leerRegistroIPC(archivo_ipc, &ra);
-    printf("Codigo: %s - Descripcion: %s - Indice IPC: %.2f\n - Periodo: %d\n", ra.codigo, ra.descripcion, ra.indice_ipc, ra.periodo);
+    printf("\nPRUEBA DE LECTURA CSV");
+    leerRegistroIPC("serie_ipc_divisiones.csv", &ra);
+    printf("\nCodigo: %s - Descripcion: %s - Indice IPC: %.2f - Periodo: %d", ra.codigo, ra.descripcion, ra.indice_ipc, ra.periodo);
 
     //Ejercicio 1
+    printf("\nEJ1 --- ");
+    printf("\nBEFORE:%d",ra.periodo);
     periodoDec = decodificarFecha(ra.periodo);
-    printf("\nPeriodo decodificado: %d",periodoDec);
+    printf("\nAFTER:\nPeriodo decodificado: %d",periodoDec);
     //Ejercicio 2
+    printf("\nEJ2 --- ");
     convertirFecha(periodoDec,ra.fecha_convertida);
     mostrarPalabra(ra.fecha_convertida);
     //Ejercicio 3
+    printf("\nEJ3 --- ");
     normalizarDescripcion(ra.descripcion);
     mostrarPalabra(ra.descripcion);
     //Ejercicio 4
+    printf("\nEJ4 --- ");
     char stringIndice[6];
     sprintf(stringIndice,"%f",ra.indice_ipc);
     convertirComaAPunto(stringIndice);
     mostrarPalabra(stringIndice);
-
+    //Ejercicio 5
+    printf("\nEJ5 --- ");
     //Ejercicio 6
-
+    printf("\nEJ6 --- ");
+    Vector vector;
+    vectorCrear(&vector, sizeof(Clasificacion));
+    calcularIPCPorGrupos(archivo_ipc, &vector);
     //Ejercicio 7
 
     //Ejercicio 8
 
     //Ejercicio 9
-    Vector vector;
-    vectorCrear(&vector, sizeof(Clasificacion));
-    calcularIPCPorGrupos(archivo_ipc, &vector);
+
 
     fclose(archivo_ipc);
-
-
     return 0;
 }
 bool leerRegistroIPC(char* nomArch, RegistroIPC* reg)
@@ -67,10 +73,9 @@ bool leerRegistroIPC(char* nomArch, RegistroIPC* reg)
     // Se salta la línea del encabezado
     fgets(buffer, sizeof(buffer), fpArch);
 
-    RegistroIPC reg;
     fgets(buffer, sizeof(buffer), fpArch);
-    
-    if (trozarLineaIPC(buffer, &reg))
+
+    if (trozarLineaIPC(buffer, reg))
     {
         //mostrarRegistroIPC(reg);
     }
@@ -224,7 +229,7 @@ bool redimensionarVector(Vector* vector, size_t capacidad)
         return false;
     }
 
-    printf("Redimension de %llu a %llu\n", vector->capacidad, capacidad);
+    printf("Redimension de %d a %d\n", vector->capacidad, capacidad);
 
     vector->vector = vectorTemporal;
     vector->capacidad = capacidad;
@@ -277,8 +282,6 @@ int decodificarFecha(int fecha_codif) {
         *j++ = decodificarDigito(*i++);
     }
     *j = '\0';
-
-    printf("Fecha decodificada -> %s\n", stringFechaDecodif);
     return atoi(stringFechaDecodif);
 }
 
@@ -322,7 +325,7 @@ void convertirComaAPunto(char *p) {
         if (*p == ',') {
             *p = '.';
         }
-        *p++;
+        p++;
     }
 }
 
@@ -406,7 +409,7 @@ void solicitarFecha(int *fecha) {
     printf("Ingrese la fecha con formato aaaamm: ");
     scanf("%d", fecha);
 }
-
+// 6
 void calcularIPCPorGrupos(FILE *archivo_ipc, Vector* grupos) {
     char buffer[500];
     fgets(buffer, sizeof(buffer), archivo_ipc);
@@ -431,7 +434,6 @@ void calcularIPCPorGrupos(FILE *archivo_ipc, Vector* grupos) {
     rewind(archivo_ipc);
 }
 
-// 6
 void clasificarGrupo(const char* descripcion, char *grupo) {
     if (strcmpi(descripcion, "alimentos y bebidas no alcohólicas") == 0 ||
         strcmpi(descripcion, "bebidas alcohólicas y tabaco") == 0 ||
