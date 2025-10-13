@@ -45,6 +45,8 @@ int main(void) {
     mostrarPalabra(stringIndice);
     //Ejercicio 5
     printf("\nEJ5 --- ");
+    // Se puede probar monto=15000, region=GBA, fechas : 201701 - 201712 , entonces el ipc1: 101.3130, ipc2: 125.0392 => variacion porcentual
+    calcularMontoAjustadoPorIPC(archivo_ipc);
     //Ejercicio 6
     printf("\nEJ6 --- ");
     Vector vector;
