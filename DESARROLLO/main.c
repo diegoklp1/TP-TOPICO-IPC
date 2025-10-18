@@ -77,7 +77,7 @@ bool leerRegistroIPC(char* nomArch, RegistroIPC* reg)
 
     fgets(buffer, sizeof(buffer), fpArch);
 
-    if (trozarLineaIPC(buffer, reg))
+    if (trozarLineaDivisiones(buffer, reg))
     {
         //mostrarRegistroIPC(reg);
     }
@@ -106,7 +106,7 @@ bool leerArchivoCompletoIPC(char* nomArch)
     RegistroIPC reg;
     while (fgets(buffer, sizeof(buffer), fpArch))
     {
-        if (trozarLineaIPC(buffer, &reg))
+        if (trozarLineaDivisiones(buffer, &reg))
         {
             //mostrarRegistroIPC(reg);
         }
@@ -121,7 +121,7 @@ bool leerArchivoCompletoIPC(char* nomArch)
     return true;
 }
 
-bool trozarLineaIPC(char buffer[], RegistroIPC *registro)
+bool trozarLineaDivisiones(char buffer[], RegistroIPC *registro)
 {
     char* pos;
     pos = strchr(buffer, '\n');
@@ -162,6 +162,66 @@ bool trozarLineaIPC(char buffer[], RegistroIPC *registro)
     pos = strrchr(buffer, ';');
     if (!pos) return false;
     registro->indice_ipc = atof(pos + 1);
+    *pos = '\0';
+
+    //clasificador
+    pos = strrchr(buffer, ';');
+    if (!pos) return false;
+    strcpy(registro->clasificador, pos + 1);
+    *pos = '\0';
+
+    //descripcion
+    pos = strrchr(buffer, ';');
+    if (!pos) return false;
+    limpiarCampo(pos+1);
+    strcpy(registro->descripcion, pos + 1);
+    *pos = '\0';
+
+    //codigo
+    strcpy(registro->codigo, buffer);
+
+    return true;
+}
+bool trozarLineaAperturas(char buffer[], RegistroIPC *registro)
+{
+    char* pos;
+    pos = strchr(buffer, '\n');
+    if (!pos) {
+        return false;
+    }
+
+    *pos = '\0';
+    //region
+    pos = strrchr(buffer, ';');
+    if (!pos) return false;
+    limpiarCampo(pos+1);
+    strcpy(registro->region, pos + 1);
+    *pos = '\0';
+
+    //variacion_interanual
+    pos = strrchr(buffer, ';');
+    if (!pos) return false;
+    registro->variacion_interanual = atof(pos + 1);
+    *pos = '\0';
+
+    //variacion_mensual
+    pos = strrchr(buffer, ';');
+    if (!pos) return false;
+    registro->variacion_mensual = atof(pos + 1);
+    *pos = '\0';
+
+    //indice_ipc
+    pos = strrchr(buffer, ';');
+    if (!pos) return false;
+    registro->indice_ipc = atof(pos + 1);
+    *pos = '\0';
+
+    //periodo
+    pos = strrchr(buffer, ';');
+    if (!pos)
+        return false;
+    limpiarCampo(pos+1);
+    registro->periodo = atoi(pos + 1);
     *pos = '\0';
 
     //clasificador
@@ -351,7 +411,7 @@ void calcularMontoAjustadoPorIPC(FILE *archivo_ipc) {
 
     //Buscamos los IPCs
     while (fgets(buffer, sizeof(buffer), archivo_ipc) && (ipcInicio == 0 || ipcFin == 0)) {
-        if (trozarLineaIPC(buffer, &ra) && strcmpi(ra.descripcion, "nivel general") == 0 && strcmpi(ra.region, region) == 0) {
+        if (trozarLineaDivisiones(buffer, &ra) && strcmpi(ra.descripcion, "nivel general") == 0 && strcmpi(ra.region, region) == 0) {
             if (fechaInicio == decodificarFecha(ra.periodo))
                 ipcInicio = ra.indice_ipc;
             else if (fechaFin == decodificarFecha(ra.periodo))
@@ -418,7 +478,7 @@ void calcularIPCPorGrupos(FILE *archivo_ipc, Vector* grupos) {
     RegistroIPC ra;
     Clasificacion clasificacion;
     while (fgets(buffer, sizeof(buffer), archivo_ipc)) {
-        if (trozarLineaIPC(buffer, &ra)) {
+        if (trozarLineaDivisiones(buffer, &ra)) {
             if (strcmpi(ra.region, "nacional") == 0) {
                 clasificacion.periodo = decodificarFecha(ra.periodo);
                 convertirFecha(clasificacion.periodo, clasificacion.fecha);
@@ -499,6 +559,140 @@ void mostrarPromedios(Vector* grupos) {
 // Se reutiliza la función del punto 4
 
 // 9
+void calcularAjusteAlquiler() {
+    float monto;
+    char region[10];
+    int fechaInicio;
+    double ipcInicio = 0, ipcMax = 0;
+    int fechaMax = 0;
+    
+    // 1. Solicitar datos de entrada [cite: 197-198]
+    solicitarMonto(&monto);
+    solicitarRegion(region);
+    printf("--- Ingrese el Periodo de Inicio de Contrato ---\n");
+    solicitarFecha(&fechaInicio); // Reutilizamos tu función
 
+    // 2. Abrir archivo de aperturas [cite: 173]
+    FILE* archivo_aperturas = fopen(FILENAME_APERTURAS, "r");
+    if (archivo_aperturas == NULL) {
+        perror("Error al abrir el archivo serie_ipc_aperturas.csv");
+        return;
+    }
 
+    char buffer[500];
+    RegistroIPC ra;
+    // Array para guardar los registros y evitar una segunda lectura [cite: 274, 276]
+    RegistroIPC registros_encontrados[MAX_MESES_REPORTE];
+    int count = 0;
+    int encontradoInicio = 0;
+
+    fgets(buffer, sizeof(buffer), archivo_aperturas); // Saltar encabezado
+
+    // 3. Pasada única sobre el archivo CSV
+    while (fgets(buffer, sizeof(buffer), archivo_aperturas)) {
+        if (trozarLineaAperturas(buffer, &ra)) {
+            // 4. Filtrar por descripcion "Alquiler de la vivienda" y region [cite: 201]
+            if (strcmpi(ra.descripcion, FILTRO_DESCRIPCION_ALQUILER) == 0 && strcmpi(ra.region, region) == 0) {
+                
+                // 5. Buscar el registro de INICIO
+                if (ra.periodo == fechaInicio) {
+                    ipcInicio = ra.indice_ipc;
+                    encontradoInicio = 1;
+                }
+                
+                // 6. Si ya encontramos el inicio, guardamos este y los siguientes
+                if (encontradoInicio && count < MAX_MESES_REPORTE) {
+                    registros_encontrados[count++] = ra;
+                    
+                    // 7. Actualizar el PERIODO MAXIMO [cite: 202, 204]
+                    if (ra.periodo > fechaMax) {
+                        fechaMax = ra.periodo;
+                        ipcMax = ra.indice_ipc;
+                    }
+                }
+            }
+        }
+    }
+    fclose(archivo_aperturas); // Cerramos el archivo CSV
+
+    // 8. Validar si se encontraron los datos necesarios
+    if (ipcInicio == 0 || count == 0) {
+        printf("Error: No se pudo encontrar el indice de inicio para la region y fecha dadas.\n");
+        return;
+    }
+
+    // 9. Calcular y mostrar totales [cite: 206-208]
+    double montoAjustadoTotal = monto * (ipcMax / ipcInicio); 
+    double variacionTotal = (ipcMax / ipcInicio - 1) * 100;
+    
+    printf("\n--- Calculadora de Alquileres ---\n");
+    printf("Monto inicial:       $ %.2f\n", monto); 
+    printf("Monto ajustado:      $ %.2f\n", montoAjustadoTotal); 
+    printf("Variacion porcentual:  %.2f %%\n", variacionTotal); 
+
+    // 10. Abrir archivo binario para escritura 
+    FILE* archivo_binario = fopen(ARCHIVO_BINARIO_SALIDA, "wb");
+    if (archivo_binario == NULL) {
+        perror("Error al crear archivo binario de salida");
+        return; 
+    }
+
+    // 11. Imprimir cabecera de la tabla en consola [cite: 209]
+    printf("\n--- Detalle Mes a Mes ---\n");
+    printf("-----------------------------------------------------------\n");
+    printf("%-10s %-12s %-12s %-15s\n", "Periodo", "Indice", "Variacion %", "Monto ajustado");
+    printf("-----------------------------------------------------------\n");
+    
+    FilaTablaAlquiler fila;
+
+    // 12. Iterar sobre los registros guardados para generar la tabla
+    for (int i = 0; i < count; i++) {
+        ra = registros_encontrados[i];
+        
+        // Llenar la struct 'fila' para la tabla
+        sprintf(fila.periodo, "%d-%02d", ra.periodo / 100, ra.periodo % 100);
+        fila.indice = ra.indice_ipc;
+        // Calcula la variación y monto contra el índice INICIAL [cite: 209]
+        fila.variacionPct = (ra.indice_ipc / ipcInicio - 1) * 100;
+        fila.montoAjustado = monto * (ra.indice_ipc / ipcInicio);
+        
+        // Imprimir fila en consola
+        printf("%-10s %-12.2f %-12.2f %-15.2f\n", 
+               fila.periodo, 
+               fila.indice, 
+               fila.variacionPct, 
+               fila.montoAjustado);
+               
+        // Escribir fila en archivo binario [cite: 261]
+        fwrite(&fila, sizeof(FilaTablaAlquiler), 1, archivo_binario);
+    }
+    
+    fclose(archivo_binario); // Cerramos el archivo binario
+
+    // 13. Leer y mostrar el archivo binario como pide el TP [cite: 261]
+    leerMostrarTablaBinario(ARCHIVO_BINARIO_SALIDA);
+}
+void leerMostrarTablaBinario(const char* nombreArchivo) {
+    FILE* archivo = fopen(nombreArchivo, "rb");
+    if (archivo == NULL) {
+        printf("\nError al abrir el archivo binario '%s' para lectura.\n", nombreArchivo);
+        return;
+    }
+    
+    printf("\n\n--- Mostrando datos leidos desde '%s' ---\n", nombreArchivo);
+    printf("-----------------------------------------------------------\n");
+    printf("%-10s %-12s %-12s %-15s\n", "Periodo", "Indice", "Variacion %", "Monto ajustado");
+    printf("-----------------------------------------------------------\n");
+    
+    FilaTablaAlquiler fila;
+    // Lee registros del tamaño de la struct FilaTablaAlquiler, 1 a la vez
+    while (fread(&fila, sizeof(FilaTablaAlquiler), 1, archivo) == 1) {
+        printf("%-10s %-12.2f %-12.2f %-15.2f\n", 
+               fila.periodo, 
+               fila.indice, 
+               fila.variacionPct, 
+               fila.montoAjustado);
+    }
+    fclose(archivo);
+}
 

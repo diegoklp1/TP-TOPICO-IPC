@@ -1,5 +1,9 @@
 #include <stdio.h>
 
+#define FILENAME_APERTURAS "serie_ipc_aperturas.csv"
+#define FILTRO_DESCRIPCION_ALQUILER "Alquiler de la vivienda"
+#define ARCHIVO_BINARIO_SALIDA "tabla_alquileres.dat"
+#define MAX_MESES_REPORTE 500
 
 typedef struct {
     char codigo[32];
@@ -28,3 +32,10 @@ typedef struct {
     size_t cantidadElementos;
     size_t capacidad;
 } Vector;
+
+typedef struct {
+    char periodo[8]; // Formato "YYYY-MM"
+    double indice;
+    double variacionPct;
+    double montoAjustado;
+} FilaTablaAlquiler;

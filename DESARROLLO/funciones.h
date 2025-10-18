@@ -10,7 +10,7 @@ void limpiarCampo(char *campo);
 void mostrarPalabra(const char *p);
 bool leerRegistroIPC(char* nomArch, RegistroIPC* reg);
 bool leerArchivoCompletoIPC(char* nomArch);
-bool trozarLineaIPC(char buffer[], RegistroIPC *registro);
+bool trozarLineaDivisiones(char buffer[], RegistroIPC *registro);
 
 //1
 char decodificarDigito(char c);
