@@ -6,7 +6,7 @@
 #include "funciones.h"
 
 int main(void) {
-
+    
     // LEER REGISTRO DE CSV
     FILE *archivo_ipc = fopen("serie_ipc_divisiones.csv", "r");
     if (archivo_ipc == NULL) {
@@ -57,7 +57,7 @@ int main(void) {
     //Ejercicio 8
 
     //Ejercicio 9
-
+    calcularAjusteAlquiler();
 
     fclose(archivo_ipc);
     return 0;
@@ -565,7 +565,7 @@ void calcularAjusteAlquiler() {
     int fechaInicio;
     double ipcInicio = 0, ipcMax = 0;
     int fechaMax = 0;
-    
+
     // 1. Solicitar datos de entrada [cite: 197-198]
     solicitarMonto(&monto);
     solicitarRegion(region);
@@ -593,17 +593,17 @@ void calcularAjusteAlquiler() {
         if (trozarLineaAperturas(buffer, &ra)) {
             // 4. Filtrar por descripcion "Alquiler de la vivienda" y region [cite: 201]
             if (strcmpi(ra.descripcion, FILTRO_DESCRIPCION_ALQUILER) == 0 && strcmpi(ra.region, region) == 0) {
-                
+
                 // 5. Buscar el registro de INICIO
                 if (ra.periodo == fechaInicio) {
                     ipcInicio = ra.indice_ipc;
                     encontradoInicio = 1;
                 }
-                
+
                 // 6. Si ya encontramos el inicio, guardamos este y los siguientes
                 if (encontradoInicio && count < MAX_MESES_REPORTE) {
                     registros_encontrados[count++] = ra;
-                    
+
                     // 7. Actualizar el PERIODO MAXIMO [cite: 202, 204]
                     if (ra.periodo > fechaMax) {
                         fechaMax = ra.periodo;
@@ -622,19 +622,19 @@ void calcularAjusteAlquiler() {
     }
 
     // 9. Calcular y mostrar totales [cite: 206-208]
-    double montoAjustadoTotal = monto * (ipcMax / ipcInicio); 
+    double montoAjustadoTotal = monto * (ipcMax / ipcInicio);
     double variacionTotal = (ipcMax / ipcInicio - 1) * 100;
-    
-    printf("\n--- Calculadora de Alquileres ---\n");
-    printf("Monto inicial:       $ %.2f\n", monto); 
-    printf("Monto ajustado:      $ %.2f\n", montoAjustadoTotal); 
-    printf("Variacion porcentual:  %.2f %%\n", variacionTotal); 
 
-    // 10. Abrir archivo binario para escritura 
+    printf("\n--- Calculadora de Alquileres ---\n");
+    printf("Monto inicial:       $ %.2f\n", monto);
+    printf("Monto ajustado:      $ %.2f\n", montoAjustadoTotal);
+    printf("Variacion porcentual:  %.2f %%\n", variacionTotal);
+
+    // 10. Abrir archivo binario para escritura
     FILE* archivo_binario = fopen(ARCHIVO_BINARIO_SALIDA, "wb");
     if (archivo_binario == NULL) {
         perror("Error al crear archivo binario de salida");
-        return; 
+        return;
     }
 
     // 11. Imprimir cabecera de la tabla en consola [cite: 209]
@@ -642,31 +642,31 @@ void calcularAjusteAlquiler() {
     printf("-----------------------------------------------------------\n");
     printf("%-10s %-12s %-12s %-15s\n", "Periodo", "Indice", "Variacion %", "Monto ajustado");
     printf("-----------------------------------------------------------\n");
-    
+
     FilaTablaAlquiler fila;
 
     // 12. Iterar sobre los registros guardados para generar la tabla
     for (int i = 0; i < count; i++) {
         ra = registros_encontrados[i];
-        
+
         // Llenar la struct 'fila' para la tabla
         sprintf(fila.periodo, "%d-%02d", ra.periodo / 100, ra.periodo % 100);
         fila.indice = ra.indice_ipc;
         // Calcula la variación y monto contra el índice INICIAL [cite: 209]
         fila.variacionPct = (ra.indice_ipc / ipcInicio - 1) * 100;
         fila.montoAjustado = monto * (ra.indice_ipc / ipcInicio);
-        
+
         // Imprimir fila en consola
-        printf("%-10s %-12.2f %-12.2f %-15.2f\n", 
-               fila.periodo, 
-               fila.indice, 
-               fila.variacionPct, 
+        printf("%-10s %-12.2f %-12.2f %-15.2f\n",
+               fila.periodo,
+               fila.indice,
+               fila.variacionPct,
                fila.montoAjustado);
-               
+
         // Escribir fila en archivo binario [cite: 261]
         fwrite(&fila, sizeof(FilaTablaAlquiler), 1, archivo_binario);
     }
-    
+
     fclose(archivo_binario); // Cerramos el archivo binario
 
     // 13. Leer y mostrar el archivo binario como pide el TP [cite: 261]
@@ -678,19 +678,19 @@ void leerMostrarTablaBinario(const char* nombreArchivo) {
         printf("\nError al abrir el archivo binario '%s' para lectura.\n", nombreArchivo);
         return;
     }
-    
+
     printf("\n\n--- Mostrando datos leidos desde '%s' ---\n", nombreArchivo);
     printf("-----------------------------------------------------------\n");
     printf("%-10s %-12s %-12s %-15s\n", "Periodo", "Indice", "Variacion %", "Monto ajustado");
     printf("-----------------------------------------------------------\n");
-    
+
     FilaTablaAlquiler fila;
     // Lee registros del tamaño de la struct FilaTablaAlquiler, 1 a la vez
     while (fread(&fila, sizeof(FilaTablaAlquiler), 1, archivo) == 1) {
-        printf("%-10s %-12.2f %-12.2f %-15.2f\n", 
-               fila.periodo, 
-               fila.indice, 
-               fila.variacionPct, 
+        printf("%-10s %-12.2f %-12.2f %-15.2f\n",
+               fila.periodo,
+               fila.indice,
+               fila.variacionPct,
                fila.montoAjustado);
     }
     fclose(archivo);

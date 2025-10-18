@@ -36,6 +36,10 @@ void calcularIPCPorGrupos(FILE *archivo_ipc, Vector* vector);
 void mostrarPromedios(Vector* vec);
 void clasificarGrupo(const char* descripcion, char *grupo);
 
+//9
+void leerMostrarTablaBinario(const char*);
+
+
 static bool redimensionarVector(Vector* vec, size_t cap);
 
 bool vectorCrear(Vector* vec, size_t tamElem);
