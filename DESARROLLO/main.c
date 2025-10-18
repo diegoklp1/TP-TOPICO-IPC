@@ -566,13 +566,11 @@ void calcularAjusteAlquiler() {
     double ipcInicio = 0, ipcMax = 0;
     int fechaMax = 0;
 
-    // 1. Solicitar datos de entrada [cite: 197-198]
     solicitarMonto(&monto);
     solicitarRegion(region);
     printf("--- Ingrese el Periodo de Inicio de Contrato ---\n");
-    solicitarFecha(&fechaInicio); // Reutilizamos tu función
+    solicitarFecha(&fechaInicio);
 
-    // 2. Abrir archivo de aperturas [cite: 173]
     FILE* archivo_aperturas = fopen(FILENAME_APERTURAS, "r");
     if (archivo_aperturas == NULL) {
         perror("Error al abrir el archivo serie_ipc_aperturas.csv");
@@ -581,30 +579,25 @@ void calcularAjusteAlquiler() {
 
     char buffer[500];
     RegistroIPC ra;
-    // Array para guardar los registros y evitar una segunda lectura [cite: 274, 276]
     RegistroIPC registros_encontrados[MAX_MESES_REPORTE];
     int count = 0;
     int encontradoInicio = 0;
 
     fgets(buffer, sizeof(buffer), archivo_aperturas); // Saltar encabezado
 
-    // 3. Pasada única sobre el archivo CSV
     while (fgets(buffer, sizeof(buffer), archivo_aperturas)) {
         if (trozarLineaAperturas(buffer, &ra)) {
-            // 4. Filtrar por descripcion "Alquiler de la vivienda" y region [cite: 201]
             if (strcmpi(ra.descripcion, FILTRO_DESCRIPCION_ALQUILER) == 0 && strcmpi(ra.region, region) == 0) {
 
-                // 5. Buscar el registro de INICIO
                 if (ra.periodo == fechaInicio) {
                     ipcInicio = ra.indice_ipc;
                     encontradoInicio = 1;
                 }
 
-                // 6. Si ya encontramos el inicio, guardamos este y los siguientes
                 if (encontradoInicio && count < MAX_MESES_REPORTE) {
                     registros_encontrados[count++] = ra;
 
-                    // 7. Actualizar el PERIODO MAXIMO [cite: 202, 204]
+                
                     if (ra.periodo > fechaMax) {
                         fechaMax = ra.periodo;
                         ipcMax = ra.indice_ipc;
@@ -613,15 +606,13 @@ void calcularAjusteAlquiler() {
             }
         }
     }
-    fclose(archivo_aperturas); // Cerramos el archivo CSV
+    fclose(archivo_aperturas); 
 
-    // 8. Validar si se encontraron los datos necesarios
     if (ipcInicio == 0 || count == 0) {
         printf("Error: No se pudo encontrar el indice de inicio para la region y fecha dadas.\n");
         return;
     }
 
-    // 9. Calcular y mostrar totales [cite: 206-208]
     double montoAjustadoTotal = monto * (ipcMax / ipcInicio);
     double variacionTotal = (ipcMax / ipcInicio - 1) * 100;
 
@@ -630,14 +621,12 @@ void calcularAjusteAlquiler() {
     printf("Monto ajustado:      $ %.2f\n", montoAjustadoTotal);
     printf("Variacion porcentual:  %.2f %%\n", variacionTotal);
 
-    // 10. Abrir archivo binario para escritura
     FILE* archivo_binario = fopen(ARCHIVO_BINARIO_SALIDA, "wb");
     if (archivo_binario == NULL) {
         perror("Error al crear archivo binario de salida");
         return;
     }
 
-    // 11. Imprimir cabecera de la tabla en consola [cite: 209]
     printf("\n--- Detalle Mes a Mes ---\n");
     printf("-----------------------------------------------------------\n");
     printf("%-10s %-12s %-12s %-15s\n", "Periodo", "Indice", "Variacion %", "Monto ajustado");
@@ -645,31 +634,29 @@ void calcularAjusteAlquiler() {
 
     FilaTablaAlquiler fila;
 
-    // 12. Iterar sobre los registros guardados para generar la tabla
+    //Iterar sobre los registros guardados para generar la tabla
     for (int i = 0; i < count; i++) {
         ra = registros_encontrados[i];
 
         // Llenar la struct 'fila' para la tabla
         sprintf(fila.periodo, "%d-%02d", ra.periodo / 100, ra.periodo % 100);
         fila.indice = ra.indice_ipc;
-        // Calcula la variación y monto contra el índice INICIAL [cite: 209]
+        //variación y monto contra el índice INICIAL 
         fila.variacionPct = (ra.indice_ipc / ipcInicio - 1) * 100;
         fila.montoAjustado = monto * (ra.indice_ipc / ipcInicio);
 
-        // Imprimir fila en consola
         printf("%-10s %-12.2f %-12.2f %-15.2f\n",
                fila.periodo,
                fila.indice,
                fila.variacionPct,
                fila.montoAjustado);
 
-        // Escribir fila en archivo binario [cite: 261]
         fwrite(&fila, sizeof(FilaTablaAlquiler), 1, archivo_binario);
     }
 
     fclose(archivo_binario); // Cerramos el archivo binario
 
-    // 13. Leer y mostrar el archivo binario como pide el TP [cite: 261]
+    //Leer y mostrar el archivo binario
     leerMostrarTablaBinario(ARCHIVO_BINARIO_SALIDA);
 }
 void leerMostrarTablaBinario(const char* nombreArchivo) {
