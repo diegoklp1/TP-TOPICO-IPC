@@ -35,6 +35,10 @@ void solicitarFecha(int *fecha_inicio);
 void calcularIPCPorGrupos(FILE *archivo_ipc, Vector* vector);
 void mostrarPromedios(Vector* vec);
 void clasificarGrupo(const char* descripcion, char *grupo);
+//7
+int septimoEjercicio(const char *nombreDeEntrada);
+
+void convertirPeriodo(const char *periodo, char *fechaConvertida);
 
 //9
 void leerMostrarTablaBinario(const char*);
@@ -47,3 +51,4 @@ void vectorDestruir(Vector* vec);
 
 int vectorInsertar(Vector* vec, void* elem);
 #endif // FUNCIONES_H_INCLUDED
+
