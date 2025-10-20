@@ -6,7 +6,7 @@
 #include "funciones.h"
 
 int main(void) {
-    
+
     // LEER REGISTRO DE CSV
     FILE *archivo_ipc = fopen("serie_ipc_divisiones.csv", "r");
     if (archivo_ipc == NULL) {
@@ -20,6 +20,7 @@ int main(void) {
     //Lectura de registro de csv
     fgets(buffer_encabezado, sizeof(buffer_encabezado), archivo_ipc);
     RegistroIPC ra;
+    
     printf("\nPRUEBA DE LECTURA CSV");
     leerRegistroIPC("serie_ipc_divisiones.csv", &ra);
     printf("\nCodigo: %s - Descripcion: %s - Indice IPC: %.2f - Periodo: %d", ra.codigo, ra.descripcion, ra.indice_ipc, ra.periodo);
@@ -55,7 +56,7 @@ int main(void) {
     //Ejercicio 7
 
     //Ejercicio 8
-
+    
     //Ejercicio 9
     calcularAjusteAlquiler();
 
@@ -213,6 +214,7 @@ bool trozarLineaAperturas(char buffer[], RegistroIPC *registro)
     //indice_ipc
     pos = strrchr(buffer, ';');
     if (!pos) return false;
+    //convertirComaAPunto(pos+1);
     registro->indice_ipc = atof(pos + 1);
     *pos = '\0';
 
@@ -573,7 +575,7 @@ void calcularAjusteAlquiler() {
 
     FILE* archivo_aperturas = fopen(FILENAME_APERTURAS, "r");
     if (archivo_aperturas == NULL) {
-        perror("Error al abrir el archivo serie_ipc_aperturas.csv");
+        printf("\nError al abrir el archivo serie_ipc_aperturas.csv");
         return;
     }
 
@@ -597,7 +599,7 @@ void calcularAjusteAlquiler() {
                 if (encontradoInicio && count < MAX_MESES_REPORTE) {
                     registros_encontrados[count++] = ra;
 
-                
+
                     if (ra.periodo > fechaMax) {
                         fechaMax = ra.periodo;
                         ipcMax = ra.indice_ipc;
@@ -606,7 +608,7 @@ void calcularAjusteAlquiler() {
             }
         }
     }
-    fclose(archivo_aperturas); 
+    fclose(archivo_aperturas);
 
     if (ipcInicio == 0 || count == 0) {
         printf("Error: No se pudo encontrar el indice de inicio para la region y fecha dadas.\n");
@@ -614,7 +616,7 @@ void calcularAjusteAlquiler() {
     }
 
     double montoAjustadoTotal = monto * (ipcMax / ipcInicio);
-    double variacionTotal = (ipcMax / ipcInicio - 1) * 100;
+    double variacionTotal = ((ipcMax / ipcInicio)-1) * 100;
 
     printf("\n--- Calculadora de Alquileres ---\n");
     printf("Monto inicial:       $ %.2f\n", monto);
@@ -627,11 +629,12 @@ void calcularAjusteAlquiler() {
         return;
     }
 
+    /*
     printf("\n--- Detalle Mes a Mes ---\n");
     printf("-----------------------------------------------------------\n");
     printf("%-10s %-12s %-12s %-15s\n", "Periodo", "Indice", "Variacion %", "Monto ajustado");
     printf("-----------------------------------------------------------\n");
-
+    */
     FilaTablaAlquiler fila;
 
     //Iterar sobre los registros guardados para generar la tabla
@@ -639,24 +642,23 @@ void calcularAjusteAlquiler() {
         ra = registros_encontrados[i];
 
         // Llenar la struct 'fila' para la tabla
-        sprintf(fila.periodo, "%d-%02d", ra.periodo / 100, ra.periodo % 100);
+        sprintf(fila.periodo, "%d-%02d", ra.periodo / 100, ra.periodo % 100); // anio y mes
         fila.indice = ra.indice_ipc;
-        //variación y monto contra el índice INICIAL 
-        fila.variacionPct = (ra.indice_ipc / ipcInicio - 1) * 100;
+        //variación y monto contra el índice INICIAL
+        fila.variacionPct = ((ra.indice_ipc / ipcInicio )-1) * 100;
         fila.montoAjustado = monto * (ra.indice_ipc / ipcInicio);
 
+        /*
         printf("%-10s %-12.2f %-12.2f %-15.2f\n",
                fila.periodo,
                fila.indice,
                fila.variacionPct,
                fila.montoAjustado);
-
+        */
         fwrite(&fila, sizeof(FilaTablaAlquiler), 1, archivo_binario);
     }
 
-    fclose(archivo_binario); // Cerramos el archivo binario
-
-    //Leer y mostrar el archivo binario
+    fclose(archivo_binario);
     leerMostrarTablaBinario(ARCHIVO_BINARIO_SALIDA);
 }
 void leerMostrarTablaBinario(const char* nombreArchivo) {
@@ -665,8 +667,6 @@ void leerMostrarTablaBinario(const char* nombreArchivo) {
         printf("\nError al abrir el archivo binario '%s' para lectura.\n", nombreArchivo);
         return;
     }
-
-    printf("\n\n--- Mostrando datos leidos desde '%s' ---\n", nombreArchivo);
     printf("-----------------------------------------------------------\n");
     printf("%-10s %-12s %-12s %-15s\n", "Periodo", "Indice", "Variacion %", "Monto ajustado");
     printf("-----------------------------------------------------------\n");
