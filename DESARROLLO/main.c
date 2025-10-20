@@ -56,6 +56,70 @@ int main(void) {
     
     
     //Ejercicio 7
+    // Función para convertir AAAAMM → AAAA-MM-DD
+void convertirPeriodo(const char *periodo, char *fechaConvertida)
+{
+    char anio[5];
+    char mes[3];
+
+    strncpy(anio, periodo, 4);
+    anio[4] = '\0';
+    strncpy(mes, periodo + 4, 2);
+    mes[2] = '\0';
+
+    sprintf(fechaConvertida, "%s-%s-01", anio, mes);
+}
+
+int septimoEjercicio(const char *nombreDeEntrada)
+{
+    FILE *entrada = fopen(nombreDeEntrada, "r");
+    FILE *salida = fopen("serie_ipc_aperturas_convertido.csv", "w");
+
+    if (!entrada || !salida)
+    {
+        perror("Error al abrir archivos");
+        return 1;
+    }
+
+    char linea[MAX_LINEA];
+    int esPrimera = 1;
+
+    while (fgets(linea, sizeof(linea), entrada))
+    {
+        // Si es la primera línea (encabezado), agregamos una nueva columna
+        if (esPrimera)
+        {
+            fprintf(salida, "%s,Fecha_convertida\n", strtok(linea, "\n"));
+            esPrimera = 0;
+            continue;
+        }
+
+        // Variables para almacenar campos
+        char codigo[21], descripcion[31], clasificador[31];
+        char periodo[7], indice[32], v_m_ipc[32], v_i_a_ipc[32], region[10];
+        char fecha[11];
+
+        // Leemos línea separada por punto y coma
+        int campos = sscanf(linea, "%20[^;];%30[^;];%30[^;];%6[^;];%31[^;];%31[^;];%31[^;];%9[^\n]",
+                            codigo, descripcion, clasificador, periodo,
+                            indice, v_m_ipc, v_i_a_ipc, region);
+
+        if (campos == 8)
+        {
+            convertirPeriodo(periodo, fecha);
+            fprintf(salida, "%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                    codigo, descripcion, clasificador, periodo,
+                    indice, v_m_ipc, v_i_a_ipc, region, fecha);
+        }
+    }
+
+    fclose(entrada);
+    fclose(salida);
+   remove(nombreDeEntrada);
+    rename("serie_ipc_aperturas_convertido.csv", nombreDeEntrada);
+    // printf("Archivo convertido creado correctamente: serie_ipc_aperturas_convertido.csv\n");
+    return 0;
+}
     //TO-DO
 
     //Ejercicio 8
@@ -686,4 +750,5 @@ void leerMostrarTablaBinario(const char* nombreArchivo) {
     }
     fclose(archivo);
 }
+
 
