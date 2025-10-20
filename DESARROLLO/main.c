@@ -53,9 +53,13 @@ int main(void) {
     Vector vector;
     vectorCrear(&vector, sizeof(Clasificacion));
     calcularIPCPorGrupos(archivo_ipc, &vector);
+    
+    
     //Ejercicio 7
+    //TO-DO
 
     //Ejercicio 8
+    //Se reutiliza la funcion del punto 4
     
     //Ejercicio 9
     calcularAjusteAlquiler();
