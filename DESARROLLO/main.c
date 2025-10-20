@@ -5,6 +5,8 @@
 
 #include "funciones.h"
 
+#define MAX_LINEA 512
+
 int main(void) {
 
     // LEER REGISTRO DE CSV
@@ -750,5 +752,6 @@ void leerMostrarTablaBinario(const char* nombreArchivo) {
     }
     fclose(archivo);
 }
+
 
 
