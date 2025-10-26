@@ -31,7 +31,7 @@ void solicitarFecha(int *fecha_inicio);
 int convertirFechaStringAInt(const char *fechaFormateada);
 int obtenerNumeroMes(const char *mesTexto);
 //6
-void calcularIPCPorGrupos(FILE *archivo_ipc, Vector* vector);
+void calcularIPCPorGrupos(const char* nomArchivo_ipc, Vector* grupos);
 void mostrarPromedios(Vector* vec);
 void clasificarGrupo(const char* descripcion, char *grupo);
 //7
@@ -43,7 +43,7 @@ void convertirPeriodo(const char *periodo, char *fechaConvertida);
 void leerMostrarTablaBinario(const char*);
 
 
-static bool redimensionarVector(Vector* vec, size_t cap);
+static bool redimensionarVector(Vector* vec, double factorInc);
 
 bool vectorCrear(Vector* vec, size_t tamElem);
 void vectorDestruir(Vector* vec);

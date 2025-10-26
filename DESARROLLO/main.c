@@ -6,7 +6,8 @@
 #include "funciones.h"
 
 #define MAX_LINEA 512
-
+#define TAM_INI 100
+#define FACT_INCR 1.5
 int main(void) {
 
     // LEER REGISTRO DE CSV
@@ -53,14 +54,15 @@ int main(void) {
     //Ejercicio 5
     printf("\nEJ5 --- ");
     // Se puede probar monto=15000, region=GBA, fechas : 201701 - 201712
-    calcularMontoAjustadoPorIPC("serie_ipc_divisiones.csv");
-    /*
+    //calcularMontoAjustadoPorIPC("serie_ipc_divisiones.csv");
+    
     //Ejercicio 6
     printf("\nEJ6 --- ");
     Vector vector;
     vectorCrear(&vector, sizeof(Clasificacion));
-    calcularIPCPorGrupos(archivo_ipc, &vector);
-
+    calcularIPCPorGrupos("serie_ipc_divisiones.csv", &vector);
+    free(vector.vector);
+    /*
     //Ejercicio 7
      septimoEjercicio("serie_ipc_aperturas.csv");
 
@@ -292,7 +294,7 @@ void limpiarCampo(char *campo) {
 */
 bool vectorCrear(Vector* vector, size_t tamanioElemento)
 {
-    vector->vector = malloc(tamanioElemento * 10);
+    vector->vector = malloc(tamanioElemento * TAM_INI);
 
     if(!(vector->vector)){
         vector->capacidad = 0;
@@ -301,7 +303,7 @@ bool vectorCrear(Vector* vector, size_t tamanioElemento)
 
     vector->tamanioElemento = tamanioElemento;
     vector->cantidadElementos = 0;
-    vector->capacidad = 10;
+    vector->capacidad = TAM_INI;
 
     return true;
 }
@@ -316,18 +318,19 @@ void vectorDestruir(Vector* vector)
 }
 
 
-bool redimensionarVector(Vector* vector, size_t capacidad)
+static bool redimensionarVector(Vector* vector, double factorInc)
 {
-    int* vectorTemporal = realloc(vector->vector, capacidad * vector->tamanioElemento);
+    size_t nuevaCap = (size_t)vector->capacidad*factorInc;
+    void* vectorTemporal = realloc(vector->vector,nuevaCap* vector->tamanioElemento);
 
     if(!(vectorTemporal)){
         return false;
     }
 
-    printf("Redimension de %d a %d\n", vector->capacidad, capacidad);
+    printf("Redimension de %d a %d\n", vector->capacidad, nuevaCap);
 
     vector->vector = vectorTemporal;
-    vector->capacidad = capacidad;
+    vector->capacidad = nuevaCap;
 
     return true;
 }
@@ -335,7 +338,7 @@ bool redimensionarVector(Vector* vector, size_t capacidad)
 int vectorInsertar(Vector* vector, void* elemento)
 {
     if(vector->cantidadElementos == vector->capacidad){
-        if(!redimensionarVector(vector, vector->capacidad * 2)){
+        if(!redimensionarVector(vector, FACT_INCR)){
             return 0;
         }
     }
@@ -374,6 +377,7 @@ void decodificarFecha(char* fecha_codif) {
 }
 
 // 2 : CONVERTIR FECHA DE NUMERO A CADENA
+
 void convertirFecha(char* fechaText){
     char* meses[] = {"", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio","Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"};
 
@@ -549,30 +553,34 @@ void solicitarFecha(int *fecha) {
     printf("Ingrese la fecha con formato aaaamm: ");
     scanf("%d", fecha);
 }
-/*
-// 6
-void calcularIPCPorGrupos(FILE *archivo_ipc, Vector* grupos) {
-    char buffer[500];
-    fgets(buffer, sizeof(buffer), archivo_ipc);
-    RegistroIPC ra;
-    Clasificacion clasificacion;
-    while (fgets(buffer, sizeof(buffer), archivo_ipc)) {
-        if (trozarLineaDivisiones(buffer, &ra)) {
-            if (strcmpi(ra.region, "nacional") == 0) {
-                clasificacion.periodo = decodificarFecha(ra.periodo);
-                convertirFecha(clasificacion.periodo, clasificacion.fecha);
-                strcpy(clasificacion.descripcion, ra.descripcion);
-                clasificacion.indice_ipc = ra.indice_ipc;
-                strcpy(clasificacion.region, ra.region);
-                clasificarGrupo(ra.descripcion, clasificacion.grupo);
 
+// 6
+void calcularIPCPorGrupos(const char* nomArchivo_ipc, Vector* grupos) {
+    FILE* fPArchIpc = fopen(nomArchivo_ipc,"r");
+    if(!fPArchIpc)
+    {
+        puts("ERROR PARA ABRIR ARCHIVO DE DIVISIONES");
+        return;
+    }
+    char buffer[500];
+    fgets(buffer, sizeof(buffer), fPArchIpc);
+    RegistroIPC reg;
+    Clasificacion clasificacion;
+    while (fgets(buffer, sizeof(buffer), fPArchIpc)) {
+        if (trozarLineaDivisiones(buffer, &reg)) {
+            if (strcmpi(reg.region, "nacional") == 0) {
+                clasificacion.periodo = convertirFechaStringAInt(reg.periodo);
+                strcpy(clasificacion.descripcion, reg.descripcion);
+                clasificacion.indice_ipc = atof(reg.indice_ipc);
+                strcpy(clasificacion.region, reg.region);
+                clasificarGrupo(reg.descripcion, clasificacion.grupo);
                 vectorInsertar(grupos, &clasificacion);
             }
         }
     }
     mostrarPromedios(grupos);
 
-    rewind(archivo_ipc);
+    fclose(fPArchIpc);
 }
 
 void clasificarGrupo(const char* descripcion, char *grupo) {
@@ -631,7 +639,7 @@ void mostrarPromedios(Vector* grupos) {
                cantServicios ? sumaServicios / cantServicios : 0);
     }
 }
-
+/*
 // 7
     // Función para convertir AAAAMM → AAAA-MM-DD
 void convertirPeriodo(const char *periodo, char *fechaConvertida)
