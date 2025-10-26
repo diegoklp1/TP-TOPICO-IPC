@@ -10,42 +10,39 @@
 int main(void) {
 
     // LEER REGISTRO DE CSV
-    FILE *archivo_ipc = fopen("serie_ipc_divisiones.csv", "r");
-    if (archivo_ipc == NULL) {
-        perror("Error al abrir el archivo");
+    FILE* archivo_ipc = fopen("serie_ipc_divisiones.csv", "r");
+    if (!archivo_ipc) {
+        puts("Error al abrir el archivo");
         return 1;
     }
-    //Variables de prueba
-    int periodoDec;
-    char buffer_encabezado[256];
+    FILE* archivo_ipc_act = fopen("arch_temporal.csv", "w");
+    if (!archivo_ipc_act) {
+        fclose(archivo_ipc);
+        puts("Error al crear el archivo actualizado");
+        return 1;
+    }
 
-    //Lectura de registro de csv
-    fgets(buffer_encabezado, sizeof(buffer_encabezado), archivo_ipc);
-    RegistroIPC ra;
-    
-    printf("\nPRUEBA DE LECTURA CSV");
-    leerRegistroIPC("serie_ipc_divisiones.csv", &ra);
-    printf("\nCodigo: %s - Descripcion: %s - Indice IPC: %.2f - Periodo: %d", ra.codigo, ra.descripcion, ra.indice_ipc, ra.periodo);
+    char linea[256];
+    fgets(linea, sizeof(linea), archivo_ipc);
+    fprintf(archivo_ipc_act, "%s", linea);
+    RegistroIPC reg;
+    int lim = 0;
+    while (fgets(linea, sizeof(linea), archivo_ipc)&& lim <500)
+    {
+        lim++;
+        trozarLineaDivisiones(linea,&reg);
+        //EJ1
+        decodificarFecha(reg.periodo);
+        //EJ2
+        convertirFecha(reg.periodo);
+        //EJ3
+        normalizarDescripcion(reg.descripcion);
+        //EJ4
+        convertirComaAPunto(reg.indice_ipc);
 
-    //Ejercicio 1
-    printf("\nEJ1 --- ");
-    printf("\nBEFORE:%d",ra.periodo);
-    periodoDec = decodificarFecha(ra.periodo);
-    printf("\nAFTER:\nPeriodo decodificado: %d",periodoDec);
-    //Ejercicio 2
-    printf("\nEJ2 --- ");
-    convertirFecha(periodoDec,ra.fecha_convertida);
-    mostrarPalabra(ra.fecha_convertida);
-    //Ejercicio 3
-    printf("\nEJ3 --- ");
-    normalizarDescripcion(ra.descripcion);
-    mostrarPalabra(ra.descripcion);
-    //Ejercicio 4
-    printf("\nEJ4 --- ");
-    char stringIndice[6];
-    sprintf(stringIndice,"%f",ra.indice_ipc);
-    convertirComaAPunto(stringIndice);
-    mostrarPalabra(stringIndice);
+        fprintf(archivo_ipc_act,"%s;%s;%s;%s;%.2f;%.2f;%s;%s\n",reg.codigo,reg.descripcion,reg.clasificador,reg.indice_ipc,reg.variacion_mensual,reg.variacion_interanual,reg.region,reg.periodo);
+    }
+    /*
     //Ejercicio 5
     printf("\nEJ5 --- ");
     // Se puede probar monto=15000, region=GBA, fechas : 201701 - 201712 , entonces el ipc1: 101.3130, ipc2: 125.0392 => variacion porcentual
@@ -55,8 +52,8 @@ int main(void) {
     Vector vector;
     vectorCrear(&vector, sizeof(Clasificacion));
     calcularIPCPorGrupos(archivo_ipc, &vector);
-    
-    
+
+
     //Ejercicio 7
      septimoEjercicio("serie_ipc_aperturas.csv");
 
@@ -64,11 +61,16 @@ int main(void) {
 
     //Ejercicio 8
     //Se reutiliza la funcion del punto 4
-    
+
     //Ejercicio 9
     calcularAjusteAlquiler();
-
+    */
     fclose(archivo_ipc);
+    fclose(archivo_ipc_act);
+
+    remove("serie_ipc_divisiones.csv");
+    rename("arch_temporal.csv","serie_ipc_divisiones.csv");
+
     return 0;
 }
 bool leerRegistroIPC(char* nomArch, RegistroIPC* reg)
@@ -80,19 +82,19 @@ bool leerRegistroIPC(char* nomArch, RegistroIPC* reg)
         return false;
     }
 
-    char buffer[500];
+    char linea[500];
     // Se salta la línea del encabezado
-    fgets(buffer, sizeof(buffer), fpArch);
+    fgets(linea, sizeof(linea), fpArch);
 
-    fgets(buffer, sizeof(buffer), fpArch);
+    fgets(linea, sizeof(linea), fpArch);
 
-    if (trozarLineaDivisiones(buffer, reg))
+    if (trozarLineaDivisiones(linea, reg))
     {
         //mostrarRegistroIPC(reg);
     }
     else
     {
-        //fprintf(stderr, "ADVERTENCIA: Línea con formato incorrecto omitida: %s", buffer);
+        //fprintf(stderr, "ADVERTENCIA: Línea con formato incorrecto omitida: %s", linea);
         puts("Linea Incorrecta");
     }
 
@@ -108,20 +110,20 @@ bool leerArchivoCompletoIPC(char* nomArch)
         return false;
     }
 
-    char buffer[500];
+    char linea[500];
     // Se salta la línea del encabezado
-    fgets(buffer, sizeof(buffer), fpArch);
+    fgets(linea, sizeof(linea), fpArch);
 
     RegistroIPC reg;
-    while (fgets(buffer, sizeof(buffer), fpArch))
+    while (fgets(linea, sizeof(linea), fpArch))
     {
-        if (trozarLineaDivisiones(buffer, &reg))
+        if (trozarLineaDivisiones(linea, &reg))
         {
             //mostrarRegistroIPC(reg);
         }
         else
         {
-            //fprintf(stderr, "ADVERTENCIA: Línea con formato incorrecto omitida: %s", buffer);
+            //fprintf(stderr, "ADVERTENCIA: Línea con formato incorrecto omitida: %s", linea);
             puts("Linea Incorrecta");
         }
     }
@@ -130,128 +132,6 @@ bool leerArchivoCompletoIPC(char* nomArch)
     return true;
 }
 
-bool trozarLineaDivisiones(char buffer[], RegistroIPC *registro)
-{
-    char* pos;
-    pos = strchr(buffer, '\n');
-    if (!pos) {
-        return false;
-    }
-
-    *pos = '\0';
-    //periodo
-    pos = strrchr(buffer, ';');
-    if (!pos)
-        return false;
-    limpiarCampo(pos+1);
-    registro->periodo = atoi(pos + 1);
-
-    *pos = '\0';
-
-    //region
-    pos = strrchr(buffer, ';');
-    if (!pos) return false;
-    limpiarCampo(pos+1);
-    strcpy(registro->region, pos + 1);
-    *pos = '\0';
-
-    //variacion_interanual
-    pos = strrchr(buffer, ';');
-    if (!pos) return false;
-    registro->variacion_interanual = atof(pos + 1);
-    *pos = '\0';
-
-    //variacion_mensual
-    pos = strrchr(buffer, ';');
-    if (!pos) return false;
-    registro->variacion_mensual = atof(pos + 1);
-    *pos = '\0';
-
-    //indice_ipc
-    pos = strrchr(buffer, ';');
-    if (!pos) return false;
-    registro->indice_ipc = atof(pos + 1);
-    *pos = '\0';
-
-    //clasificador
-    pos = strrchr(buffer, ';');
-    if (!pos) return false;
-    strcpy(registro->clasificador, pos + 1);
-    *pos = '\0';
-
-    //descripcion
-    pos = strrchr(buffer, ';');
-    if (!pos) return false;
-    limpiarCampo(pos+1);
-    strcpy(registro->descripcion, pos + 1);
-    *pos = '\0';
-
-    //codigo
-    strcpy(registro->codigo, buffer);
-
-    return true;
-}
-bool trozarLineaAperturas(char buffer[], RegistroIPC *registro)
-{
-    char* pos;
-    pos = strchr(buffer, '\n');
-    if (!pos) {
-        return false;
-    }
-
-    *pos = '\0';
-    //region
-    pos = strrchr(buffer, ';');
-    if (!pos) return false;
-    limpiarCampo(pos+1);
-    strcpy(registro->region, pos + 1);
-    *pos = '\0';
-
-    //variacion_interanual
-    pos = strrchr(buffer, ';');
-    if (!pos) return false;
-    registro->variacion_interanual = atof(pos + 1);
-    *pos = '\0';
-
-    //variacion_mensual
-    pos = strrchr(buffer, ';');
-    if (!pos) return false;
-    registro->variacion_mensual = atof(pos + 1);
-    *pos = '\0';
-
-    //indice_ipc
-    pos = strrchr(buffer, ';');
-    if (!pos) return false;
-    //convertirComaAPunto(pos+1);
-    registro->indice_ipc = atof(pos + 1);
-    *pos = '\0';
-
-    //periodo
-    pos = strrchr(buffer, ';');
-    if (!pos)
-        return false;
-    limpiarCampo(pos+1);
-    registro->periodo = atoi(pos + 1);
-    *pos = '\0';
-
-    //clasificador
-    pos = strrchr(buffer, ';');
-    if (!pos) return false;
-    strcpy(registro->clasificador, pos + 1);
-    *pos = '\0';
-
-    //descripcion
-    pos = strrchr(buffer, ';');
-    if (!pos) return false;
-    limpiarCampo(pos+1);
-    strcpy(registro->descripcion, pos + 1);
-    *pos = '\0';
-
-    //codigo
-    strcpy(registro->codigo, buffer);
-
-    return true;
-}
 
 void limpiarCampo(char *campo) {
     int len = strlen(campo);
@@ -266,7 +146,148 @@ void limpiarCampo(char *campo) {
         memmove(campo, campo + 1, strlen(campo + 1) + 1);
     }
 }
+bool trozarLineaDivisiones(char linea[], RegistroIPC *registro)
+{
+    char* pos;
+    pos = strchr(linea, '\n');
+    if (!pos) {
+        return false;
+    }
 
+    *pos = '\0';
+    //periodo
+    pos = strrchr(linea, ';');
+    if (!pos)
+        return false;
+    limpiarCampo(pos+1);
+    strcpy(registro->periodo, pos + 1);
+
+    *pos = '\0';
+    //region
+    pos = strrchr(linea, ';');
+    if (!pos) return false;
+    limpiarCampo(pos+1);
+    strcpy(registro->region, pos + 1);
+    *pos = '\0';
+
+    //variacion_interanual
+    pos = strrchr(linea, ';');
+    if (!pos) return false;
+    convertirComaAPunto(pos + 1);
+    registro->variacion_interanual = atof(pos + 1);
+    *pos = '\0';
+
+    //variacion_mensual
+    pos = strrchr(linea, ';');
+    if (!pos) return false;
+    convertirComaAPunto(pos + 1);
+    registro->variacion_mensual = atof(pos + 1);
+    *pos = '\0';
+
+    //indice_ipc
+    pos = strrchr(linea, ';');
+    if (!pos) return false;
+    limpiarCampo(pos+1);
+    strcpy(registro->indice_ipc, pos + 1);
+    *pos = '\0';
+
+    //clasificador
+    pos = strrchr(linea, ';');
+    if (!pos) return false;
+    limpiarCampo(pos+1);
+    strcpy(registro->clasificador, pos + 1);
+    *pos = '\0';
+
+    //descripcion
+    pos = strrchr(linea, ';');
+    if (!pos) return false;
+    limpiarCampo(pos+1);
+    strcpy(registro->descripcion, pos + 1);
+    *pos = '\0';
+
+    //codigo
+    limpiarCampo(linea);
+    strcpy(registro->codigo, linea);
+
+    return true;
+}
+bool trozarLineaAperturas(char linea[], RegistroIPC *registro)
+{
+    char* pos;
+    pos = strchr(linea, '\n');
+    if (!pos) {
+        return false;
+    }
+
+    *pos = '\0';
+    //region
+    pos = strrchr(linea, ';');
+    if (!pos) return false;
+    //limpiarCampo(pos+1);
+    strcpy(registro->region, pos + 1);
+    *pos = '\0';
+
+    //variacion_interanual
+    pos = strrchr(linea, ';');
+    if (!pos) return false;
+    registro->variacion_interanual = atof(pos + 1);
+    *pos = '\0';
+
+    //variacion_mensual
+    pos = strrchr(linea, ';');
+    if (!pos) return false;
+    registro->variacion_mensual = atof(pos + 1);
+    *pos = '\0';
+
+    //indice_ipc
+    pos = strrchr(linea, ';');
+    if (!pos) return false;
+    //convertirComaAPunto(pos+1);
+    strcpy(registro->indice_ipc, pos + 1);
+    *pos = '\0';
+
+    //periodo
+    pos = strrchr(linea, ';');
+    if (!pos)
+        return false;
+    //limpiarCampo(pos+1);
+    strcpy(registro->periodo, pos + 1);
+    *pos = '\0';
+
+    //clasificador
+    pos = strrchr(linea, ';');
+    if (!pos) return false;
+    strcpy(registro->clasificador, pos + 1);
+    *pos = '\0';
+
+    //descripcion
+    pos = strrchr(linea, ';');
+    if (!pos) return false;
+    //limpiarCampo(pos+1);
+    strcpy(registro->descripcion, pos + 1);
+    *pos = '\0';
+
+    //codigo
+    strcpy(registro->codigo, linea);
+
+    return true;
+}
+
+/*
+void limpiarCampo(char *campo) {
+    int len = strlen(campo);
+
+    while (len > 0 && (campo[len-1] == '\n' || campo[len-1] == '\r' || campo[len-1] == ' ')) {
+        campo[len-1] = '\0';
+        len--;
+    }
+
+    if (len > 1 && campo[0] == '"' && campo[len-1] == '"') {
+        campo[len-1] = '\0';
+        memmove(campo, campo + 1, strlen(campo + 1) + 1);
+    }
+}
+*/
 bool vectorCrear(Vector* vector, size_t tamanioElemento)
 {
     vector->vector = malloc(tamanioElemento * 10);
@@ -337,37 +358,32 @@ char decodificarDigito(char c) {
         case '3': return '7';
         case '2': return '8';
         case '5': return '9';
-        default:  return '?';
+        default:  return 'c';
     }
 }
 
-int decodificarFecha(int fecha_codif) {
-    char stringFechaCodif[16];
-    char stringFechaDecodif[16];
+void decodificarFecha(char* fecha_codif) {
 
-    sprintf(stringFechaCodif, "%d", fecha_codif);
-
-    const char *i = stringFechaCodif;
-    char *j = stringFechaDecodif;
-
-    while (*i != '\0') {
-        *j++ = decodificarDigito(*i++);
+    char* i = fecha_codif;
+    while (isdigit(*i)) {
+        *i = decodificarDigito(*i);
+        i++;
     }
-    *j = '\0';
-    return atoi(stringFechaDecodif);
 }
 
 // 2 : CONVERTIR FECHA DE NUMERO A CADENA
-void convertirFecha(int fecha,char* fechaTexto){
+void convertirFecha(char* fechaText){
     char* meses[] = {"", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio","Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"};
+
+    int fecha = atoi(fechaText);
 
     int anio = fecha / 100;
     int mes = fecha % 100;
 
     if (mes >= 1 && mes <= 12) {
-        sprintf(fechaTexto, "%s - %d", meses[mes], anio);
+        sprintf(fechaText, "%s - %d", meses[mes], anio);
     } else {
-        sprintf(fechaTexto, "Fecha Invalida");
+        sprintf(fechaText, "Fecha Invalida");
     }
 }
 
@@ -379,15 +395,25 @@ void mostrarPalabra(const char *p) {
 }
 
 // 3: Normalizar descripción
-void normalizarDescripcion(char *p) {
-    if (*p) {
-        *p = toupper(*p);
-        p++;
+void normalizarDescripcion(char *pLec) {
+
+    char* pEscr = pLec;
+
+    while (*pLec ==' ')
+    {
+        pLec++;
     }
 
-    while (*p) {
-        *p = tolower(*p);
-        p++;
+    if (*pLec) {
+        *pEscr = toupper(*pLec);
+        pLec++;
+        pEscr++;
+    }
+
+    while (*pLec) {
+        *pEscr = tolower(*pLec);
+        pEscr++;
+        pLec++;
     }
 }
 
@@ -401,6 +427,7 @@ void convertirComaAPunto(char *p) {
     }
 }
 
+/*
 // 5: Cálculo del monto ajustado por IPC
 void calcularMontoAjustadoPorIPC(FILE *archivo_ipc) {
     float monto;
@@ -625,7 +652,6 @@ int septimoEjercicio(const char *nombreDeEntrada)
     fclose(salida);
    remove(nombreDeEntrada);
     rename("serie_ipc_aperturas_convertido.csv", nombreDeEntrada);
-    // printf("Archivo convertido creado correctamente: serie_ipc_aperturas_convertido.csv\n");
     return 0;
 }
 // 8
@@ -700,12 +726,12 @@ void calcularAjusteAlquiler() {
         return;
     }
 
-    /*
-    printf("\n--- Detalle Mes a Mes ---\n");
-    printf("-----------------------------------------------------------\n");
-    printf("%-10s %-12s %-12s %-15s\n", "Periodo", "Indice", "Variacion %", "Monto ajustado");
-    printf("-----------------------------------------------------------\n");
-    */
+    
+    //printf("\n--- Detalle Mes a Mes ---\n");
+    //printf("-----------------------------------------------------------\n");
+    //printf("%-10s %-12s %-12s %-15s\n", "Periodo", "Indice", "Variacion %", "Monto ajustado");
+    //printf("-----------------------------------------------------------\n");
+    
     FilaTablaAlquiler fila;
 
     //Iterar sobre los registros guardados para generar la tabla
@@ -719,13 +745,13 @@ void calcularAjusteAlquiler() {
         fila.variacionPct = ((ra.indice_ipc / ipcInicio )-1) * 100;
         fila.montoAjustado = monto * (ra.indice_ipc / ipcInicio);
 
-        /*
-        printf("%-10s %-12.2f %-12.2f %-15.2f\n",
-               fila.periodo,
-               fila.indice,
-               fila.variacionPct,
-               fila.montoAjustado);
-        */
+        
+        //printf("%-10s %-12.2f %-12.2f %-15.2f\n",
+        //       fila.periodo,
+        //       fila.indice,
+        //       fila.variacionPct,
+        //       fila.montoAjustado);
+
         fwrite(&fila, sizeof(FilaTablaAlquiler), 1, archivo_binario);
     }
 
@@ -753,7 +779,4 @@ void leerMostrarTablaBinario(const char* nombreArchivo) {
     }
     fclose(archivo);
 }
-
-
-
-
+*/

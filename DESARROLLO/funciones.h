@@ -6,7 +6,7 @@
 
 // Convención nombre de funciones : primer palabra en minuscula, la siguiente empiezan con mayuscula.
 
-void limpiarCampo(char *campo);
+//void limpiarCampo(char *campo);
 void mostrarPalabra(const char *p);
 bool leerRegistroIPC(char* nomArch, RegistroIPC* reg);
 bool leerArchivoCompletoIPC(char* nomArch);
@@ -14,9 +14,9 @@ bool trozarLineaDivisiones(char buffer[], RegistroIPC *registro);
 
 //1
 char decodificarDigito(char c);
-int decodificarFecha(int fechaE);
+void decodificarFecha(char* fechaE);
 //2
-void convertirFecha(int fecha, char* fechaTexto);
+void convertirFecha(char* fecha);
 //3
 void normalizarDescripcion(char *p);
 //4
