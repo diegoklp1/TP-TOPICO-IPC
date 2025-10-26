@@ -26,10 +26,10 @@ int main(void) {
     fgets(linea, sizeof(linea), archivo_ipc);
     fprintf(archivo_ipc_act, "%s", linea);
     RegistroIPC reg;
-    int lim = 0;
-    while (fgets(linea, sizeof(linea), archivo_ipc)&& lim <500)
+    //int lim = 0;
+    while (fgets(linea, sizeof(linea), archivo_ipc))
     {
-        lim++;
+        //lim++;
         trozarLineaDivisiones(linea,&reg);
         //EJ1
         decodificarFecha(reg.periodo);
@@ -42,17 +42,24 @@ int main(void) {
 
         fprintf(archivo_ipc_act,"%s;%s;%s;%s;%.2f;%.2f;%s;%s\n",reg.codigo,reg.descripcion,reg.clasificador,reg.indice_ipc,reg.variacion_mensual,reg.variacion_interanual,reg.region,reg.periodo);
     }
-    /*
+
+    fclose(archivo_ipc);
+    fclose(archivo_ipc_act);
+
+    remove("serie_ipc_divisiones.csv");
+    rename("arch_temporal.csv","serie_ipc_divisiones.csv");
+
+    
     //Ejercicio 5
     printf("\nEJ5 --- ");
-    // Se puede probar monto=15000, region=GBA, fechas : 201701 - 201712 , entonces el ipc1: 101.3130, ipc2: 125.0392 => variacion porcentual
-    calcularMontoAjustadoPorIPC(archivo_ipc);
+    // Se puede probar monto=15000, region=GBA, fechas : 201701 - 201712
+    calcularMontoAjustadoPorIPC("serie_ipc_divisiones.csv");
+    /*
     //Ejercicio 6
     printf("\nEJ6 --- ");
     Vector vector;
     vectorCrear(&vector, sizeof(Clasificacion));
     calcularIPCPorGrupos(archivo_ipc, &vector);
-
 
     //Ejercicio 7
      septimoEjercicio("serie_ipc_aperturas.csv");
@@ -65,11 +72,6 @@ int main(void) {
     //Ejercicio 9
     calcularAjusteAlquiler();
     */
-    fclose(archivo_ipc);
-    fclose(archivo_ipc_act);
-
-    remove("serie_ipc_divisiones.csv");
-    rename("arch_temporal.csv","serie_ipc_divisiones.csv");
 
     return 0;
 }
@@ -427,9 +429,16 @@ void convertirComaAPunto(char *p) {
     }
 }
 
-/*
+
 // 5: Cálculo del monto ajustado por IPC
-void calcularMontoAjustadoPorIPC(FILE *archivo_ipc) {
+void calcularMontoAjustadoPorIPC(const char* nomArchivoIpc) {
+    FILE* fPArchIpc = fopen(nomArchivoIpc,"r");
+    if(!fPArchIpc)
+    {
+        puts("ERROR PARA ABRIR ARCHIVO DE DIVISIONES");
+        return;
+    }
+    
     float monto;
     char region[10];
     int fechaInicio, fechaFin;
@@ -441,33 +450,65 @@ void calcularMontoAjustadoPorIPC(FILE *archivo_ipc) {
     solicitarFecha(&fechaInicio);
     solicitarFecha(&fechaFin);
 
-    RegistroIPC ra;
+    RegistroIPC reg;
     char buffer[500];
-    // Se salta la línea del encabezado
-    fgets(buffer, sizeof(buffer), archivo_ipc);
+    // encabezado
+    fgets(buffer, sizeof(buffer), fPArchIpc);
 
     //Buscamos los IPCs
-    while (fgets(buffer, sizeof(buffer), archivo_ipc) && (ipcInicio == 0 || ipcFin == 0)) {
-        if (trozarLineaDivisiones(buffer, &ra) && strcmpi(ra.descripcion, "nivel general") == 0 && strcmpi(ra.region, region) == 0) {
-            if (fechaInicio == decodificarFecha(ra.periodo))
-                ipcInicio = ra.indice_ipc;
-            else if (fechaFin == decodificarFecha(ra.periodo))
-                ipcFin = ra.indice_ipc;
+    while (fgets(buffer, sizeof(buffer), fPArchIpc) && (ipcInicio == 0 || ipcFin == 0)) {
+        if (trozarLineaDivisiones(buffer, &reg) && strcmpi(reg.descripcion, "nivel general") == 0 && strcmpi(reg.region, region) == 0) {
+            int fechReg = convertirFechaStringAInt(reg.periodo);
+
+            if (fechaInicio == fechReg)
+                ipcInicio = atof(reg.indice_ipc);
+            if (fechaFin == fechReg)
+                ipcFin = atof(reg.indice_ipc);
         }
     }
+    fclose(fPArchIpc);
 
     //Informamos los resultados
     if (ipcInicio == 0 || ipcFin == 0) {
         printf("No se encontraron los datos del IPC");
     }else {
-        printf("Monto inicial: %.2f | Monto ajustado: %.2f\n", monto, monto * (ipcFin / ipcInicio));
-
+        printf("Monto inicial: %.2f \n Monto ajustado: %.2f\n", monto, monto * (ipcFin / ipcInicio));
         printf("Variacion porcentual: %.2f\n", (ipcFin / ipcInicio - 1) * 100);
     }
 
-    //Regresamos el archivo al inicio
-    rewind(archivo_ipc);
 }
+int convertirFechaStringAInt(const char *fechaFormateada) {
+    char mesNombre[30];
+    int anioNum;
+    int mesNum;
+
+    if (sscanf(fechaFormateada, "%s - %d", mesNombre, &anioNum) != 2) {
+        return 0; // Error de formato
+    }
+    mesNum = obtenerNumeroMes(mesNombre);
+    if (mesNum > 0) {
+        return (anioNum * 100) + mesNum;
+    }
+    return 0;
+}
+int obtenerNumeroMes(const char *mesTexto) {
+    const char *meses[] = {
+        "enero", "febrero", "marzo", "abril", "mayo", "junio",
+        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+    };
+
+    const char **ptr = meses;
+    int numero = 1;
+
+    while (numero <= 12) {
+        if (strcmpi(mesTexto, *ptr) == 0)
+            return numero;
+        ptr++;
+        numero++;
+    }
+    return 0;
+}
+
 
 void solicitarMonto(float *monto) {
     printf("Ingrese el monto a evaluar:");
@@ -508,6 +549,7 @@ void solicitarFecha(int *fecha) {
     printf("Ingrese la fecha con formato aaaamm: ");
     scanf("%d", fecha);
 }
+/*
 // 6
 void calcularIPCPorGrupos(FILE *archivo_ipc, Vector* grupos) {
     char buffer[500];

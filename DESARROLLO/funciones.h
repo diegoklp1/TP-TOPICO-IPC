@@ -22,15 +22,14 @@ void normalizarDescripcion(char *p);
 //4
 void convertirComaAPunto(char *p);
 //5
-void calcularMontoAjustadoPorIPC(FILE *archivo_ipc);
-
+void calcularMontoAjustadoPorIPC(const char* nomArchivoIpc);
 
 void solicitarMonto(float *monto);
-
 void solicitarRegion(char *region);
-
 void solicitarFecha(int *fecha_inicio);
 
+int convertirFechaStringAInt(const char *fechaFormateada);
+int obtenerNumeroMes(const char *mesTexto);
 //6
 void calcularIPCPorGrupos(FILE *archivo_ipc, Vector* vector);
 void mostrarPromedios(Vector* vec);
