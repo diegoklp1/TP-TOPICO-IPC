@@ -74,6 +74,7 @@ int main(void) {
     //Ejercicio 9
     calcularAjusteAlquiler();
     */
+septimoEjercicio("serie_ipc_aperturas.csv");
 
     return 0;
 }
@@ -639,7 +640,6 @@ void mostrarPromedios(Vector* grupos) {
                cantServicios ? sumaServicios / cantServicios : 0);
     }
 }
-/*
 // 7
     // Función para convertir AAAAMM → AAAA-MM-DD
 void convertirPeriodo(const char *periodo, char *fechaConvertida)
@@ -704,6 +704,7 @@ int septimoEjercicio(const char *nombreDeEntrada)
     rename("serie_ipc_aperturas_convertido.csv", nombreDeEntrada);
     return 0;
 }
+/*
 // 8
 // Se reutiliza la función del punto 4
 
@@ -830,3 +831,4 @@ void leerMostrarTablaBinario(const char* nombreArchivo) {
     fclose(archivo);
 }
 */
+
