@@ -8,6 +8,8 @@
 #define MAX_LINEA 512
 #define TAM_INI 100
 #define FACT_INCR 1.5
+#define N_IPC "serie_ipc_aperturas.csv"
+
 int main(void) {
 
     // LEER REGISTRO DE CSV
@@ -74,7 +76,7 @@ int main(void) {
     //Ejercicio 9
     calcularAjusteAlquiler();
     */
-septimoEjercicio("serie_ipc_aperturas.csv");
+septimoEjercicio(N_IPC);
 
     return 0;
 }
@@ -831,4 +833,5 @@ void leerMostrarTablaBinario(const char* nombreArchivo) {
     fclose(archivo);
 }
 */
+
 
