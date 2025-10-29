@@ -8,76 +8,31 @@
 #define MAX_LINEA 512
 #define TAM_INI 100
 #define FACT_INCR 1.5
-#define N_IPC "serie_ipc_aperturas.csv"
+#define TODO_OK 1
+#define ERR_ARCHIVO 2
+#define SIN_MEM 3;
 
-int main(void) {
+int main() {
 
-    // LEER REGISTRO DE CSV
-    FILE* archivo_ipc = fopen("serie_ipc_divisiones.csv", "r");
-    if (!archivo_ipc) {
-        puts("Error al abrir el archivo");
-        return 1;
-    }
-    FILE* archivo_ipc_act = fopen("arch_temporal.csv", "w");
-    if (!archivo_ipc_act) {
-        fclose(archivo_ipc);
-        puts("Error al crear el archivo actualizado");
-        return 1;
-    }
-
-    char linea[256];
-    fgets(linea, sizeof(linea), archivo_ipc);
-    fprintf(archivo_ipc_act, "%s", linea);
-    RegistroIPC reg;
-    //int lim = 0;
-    while (fgets(linea, sizeof(linea), archivo_ipc))
-    {
-        //lim++;
-        trozarLineaDivisiones(linea,&reg);
-        //EJ1
-        decodificarFecha(reg.periodo);
-        //EJ2
-        convertirFecha(reg.periodo);
-        //EJ3
-        normalizarDescripcion(reg.descripcion);
-        //EJ4
-        convertirComaAPunto(reg.indice_ipc);
-
-        fprintf(archivo_ipc_act,"%s;%s;%s;%s;%.2f;%.2f;%s;%s\n",reg.codigo,reg.descripcion,reg.clasificador,reg.indice_ipc,reg.variacion_mensual,reg.variacion_interanual,reg.region,reg.periodo);
-    }
-
-    fclose(archivo_ipc);
-    fclose(archivo_ipc_act);
-
-    remove("serie_ipc_divisiones.csv");
-    rename("arch_temporal.csv","serie_ipc_divisiones.csv");
-
+    //EJ 1,2,3,4
+    actualizarArchivoDivisiones("serie_ipc_divisiones.csv","arch_temporal.csv");
     
-    //Ejercicio 5
-    printf("\nEJ5 --- ");
-    // Se puede probar monto=15000, region=GBA, fechas : 201701 - 201712
+    //EJ 5 (Se puede probar monto=15000, region=GBA, fechas : 201701 - 201712)
     //calcularMontoAjustadoPorIPC("serie_ipc_divisiones.csv");
     
-    //Ejercicio 6
-    printf("\nEJ6 --- ");
+    //EJ 6
+    /*
     Vector vector;
     vectorCrear(&vector, sizeof(Clasificacion));
     calcularIPCPorGrupos("serie_ipc_divisiones.csv", &vector);
-    free(vector.vector);
-    /*
-    //Ejercicio 7
-     septimoEjercicio("serie_ipc_aperturas.csv");
-
-    //TO-DO
-
-    //Ejercicio 8
-    //Se reutiliza la funcion del punto 4
-
-    //Ejercicio 9
-    calcularAjusteAlquiler();
+    vectorDestruir(&vector);
     */
-septimoEjercicio(N_IPC);
-
+    //EJ 7,8
+    actualizarArchivoAperturas("serie_ipc_aperturas.csv","arch_temporal.csv");
+        
+    //EJ 9 (1500 , 2 , 201701)
+    calcularAjusteAlquiler("serie_ipc_aperturas.csv");
+    
     return 0;
 }
 bool leerRegistroIPC(char* nomArch, RegistroIPC* reg)
@@ -230,87 +185,74 @@ bool trozarLineaAperturas(char linea[], RegistroIPC *registro)
     //region
     pos = strrchr(linea, ';');
     if (!pos) return false;
-    //limpiarCampo(pos+1);
+    limpiarCampo(pos+1);
     strcpy(registro->region, pos + 1);
     *pos = '\0';
-
+    
     //variacion_interanual
     pos = strrchr(linea, ';');
     if (!pos) return false;
+    convertirComaAPunto(pos + 1);
     registro->variacion_interanual = atof(pos + 1);
     *pos = '\0';
-
+    
     //variacion_mensual
     pos = strrchr(linea, ';');
     if (!pos) return false;
+    convertirComaAPunto(pos + 1);
     registro->variacion_mensual = atof(pos + 1);
     *pos = '\0';
-
+    
     //indice_ipc
     pos = strrchr(linea, ';');
     if (!pos) return false;
-    //convertirComaAPunto(pos+1);
+    limpiarCampo(pos+1);
     strcpy(registro->indice_ipc, pos + 1);
     *pos = '\0';
-
+    
     //periodo
     pos = strrchr(linea, ';');
     if (!pos)
         return false;
-    //limpiarCampo(pos+1);
+    limpiarCampo(pos+1);
     strcpy(registro->periodo, pos + 1);
     *pos = '\0';
 
     //clasificador
     pos = strrchr(linea, ';');
     if (!pos) return false;
+    limpiarCampo(pos+1);
     strcpy(registro->clasificador, pos + 1);
     *pos = '\0';
 
     //descripcion
     pos = strrchr(linea, ';');
     if (!pos) return false;
-    //limpiarCampo(pos+1);
+    limpiarCampo(pos+1);
     strcpy(registro->descripcion, pos + 1);
     *pos = '\0';
 
     //codigo
+    limpiarCampo(linea);
     strcpy(registro->codigo, linea);
 
     return true;
 }
-
-/*
-void limpiarCampo(char *campo) {
-    int len = strlen(campo);
-
-    while (len > 0 && (campo[len-1] == '\n' || campo[len-1] == '\r' || campo[len-1] == ' ')) {
-        campo[len-1] = '\0';
-        len--;
-    }
-
-    if (len > 1 && campo[0] == '"' && campo[len-1] == '"') {
-        campo[len-1] = '\0';
-        memmove(campo, campo + 1, strlen(campo + 1) + 1);
-    }
-}
-*/
-bool vectorCrear(Vector* vector, size_t tamanioElemento)
+int vectorCrear(Vector* vector, size_t tamElem)
 {
-    vector->vector = malloc(tamanioElemento * TAM_INI);
+    vector->vector = malloc(tamElem * TAM_INI);
 
     if(!(vector->vector)){
         vector->capacidad = 0;
-        return false;
+        return SIN_MEM;
     }
 
-    vector->tamanioElemento = tamanioElemento;
+    vector->tamanioElemento = tamElem;
     vector->cantidadElementos = 0;
     vector->capacidad = TAM_INI;
 
-    return true;
+    return TODO_OK;
 }
-
 void vectorDestruir(Vector* vector)
 {
     free(vector->vector);
@@ -319,8 +261,6 @@ void vectorDestruir(Vector* vector)
     vector->cantidadElementos = 0;
     vector->capacidad = 0;
 }
-
-
 static bool redimensionarVector(Vector* vector, double factorInc)
 {
     size_t nuevaCap = (size_t)vector->capacidad*factorInc;
@@ -342,7 +282,7 @@ int vectorInsertar(Vector* vector, void* elemento)
 {
     if(vector->cantidadElementos == vector->capacidad){
         if(!redimensionarVector(vector, FACT_INCR)){
-            return 0;
+            return SIN_MEM;
         }
     }
 
@@ -350,9 +290,51 @@ int vectorInsertar(Vector* vector, void* elemento)
            elemento, vector->tamanioElemento);
     vector->cantidadElementos++;
 
-    return 1;
+    return TODO_OK;
 }
 
+
+int actualizarArchivoDivisiones(const char* nomArchDivisiones,const char* nomArchTemporal)
+{
+    FILE* archivo_ipc = fopen(nomArchDivisiones, "r");
+    if (!archivo_ipc) {
+        puts("Error al abrir el archivo");
+        return ERR_ARCHIVO;
+    }
+    FILE* archivo_ipc_act = fopen(nomArchTemporal, "w");
+    if (!archivo_ipc_act) {
+        fclose(archivo_ipc);
+        puts("Error al crear el archivo actualizado");
+        return ERR_ARCHIVO;
+    }
+
+    char linea[256];
+    RegistroIPC reg;
+    fgets(linea, sizeof(linea), archivo_ipc);
+    fprintf(archivo_ipc_act, "%s", linea);
+    while (fgets(linea, sizeof(linea), archivo_ipc))
+    {
+        trozarLineaDivisiones(linea,&reg);
+        //EJ1
+        decodificarFecha(reg.periodo);
+        //EJ2
+        convertirFecha(reg.periodo);
+        //EJ3
+        normalizarDescripcion(reg.descripcion);
+        //EJ4
+        convertirComaAPunto(reg.indice_ipc);
+
+        fprintf(archivo_ipc_act,"%s;%s;%s;%s;%.2f;%.2f;%s;%s\n",reg.codigo,reg.descripcion,reg.clasificador,reg.indice_ipc,reg.variacion_mensual,reg.variacion_interanual,reg.region,reg.periodo);
+    }
+
+    fclose(archivo_ipc);
+    fclose(archivo_ipc_act);
+
+    remove(nomArchDivisiones);
+    rename(nomArchTemporal,nomArchDivisiones);
+
+    return TODO_OK;
+}
 // 1 : DECODIFICAR FECHA
 char decodificarDigito(char c) {
     switch (c) {
@@ -378,10 +360,9 @@ void decodificarFecha(char* fecha_codif) {
         i++;
     }
 }
-
 // 2 : CONVERTIR FECHA DE NUMERO A CADENA
-
 void convertirFecha(char* fechaText){
+    
     char* meses[] = {"", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio","Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"};
 
     int fecha = atoi(fechaText);
@@ -389,9 +370,12 @@ void convertirFecha(char* fechaText){
     int anio = fecha / 100;
     int mes = fecha % 100;
 
-    if (mes >= 1 && mes <= 12) {
+    if (mes >= 1 && mes <= 12)
+    {
         sprintf(fechaText, "%s - %d", meses[mes], anio);
-    } else {
+    } 
+    else
+    {
         sprintf(fechaText, "Fecha Invalida");
     }
 }
@@ -557,7 +541,7 @@ void solicitarFecha(int *fecha) {
     scanf("%d", fecha);
 }
 
-// 6
+// 6 Evolución del IPC por grupos 
 void calcularIPCPorGrupos(const char* nomArchivo_ipc, Vector* grupos) {
     FILE* fPArchIpc = fopen(nomArchivo_ipc,"r");
     if(!fPArchIpc)
@@ -585,7 +569,6 @@ void calcularIPCPorGrupos(const char* nomArchivo_ipc, Vector* grupos) {
 
     fclose(fPArchIpc);
 }
-
 void clasificarGrupo(const char* descripcion, char *grupo) {
     if (strcmpi(descripcion, "alimentos y bebidas no alcohólicas") == 0 ||
         strcmpi(descripcion, "bebidas alcohólicas y tabaco") == 0 ||
@@ -605,7 +588,6 @@ void clasificarGrupo(const char* descripcion, char *grupo) {
         strcpy(grupo, "Otro");
     }
 }
-
 void mostrarPromedios(Vector* grupos) {
     int periodoActual = 0;
     double sumaBienes = 0, sumaServicios = 0;
@@ -642,9 +624,47 @@ void mostrarPromedios(Vector* grupos) {
                cantServicios ? sumaServicios / cantServicios : 0);
     }
 }
+
+int actualizarArchivoAperturas(const char* nomArchAper,const char* nomArchAperTemp)
+{
+    FILE* archivo_ipc_aperturas = fopen(nomArchAper, "r");
+    if (!archivo_ipc_aperturas) {
+        puts("Error al abrir el archivo de aperturas");
+        return 1;
+    }
+    FILE* archivo_ipc_aperturas_actualizado = fopen(nomArchAperTemp, "w");
+    if (!archivo_ipc_aperturas_actualizado) {
+        fclose(archivo_ipc_aperturas);
+        puts("Error al crear el archivo actualizado");
+        return 1;
+    }
+    char linea[256];
+    RegistroIPC reg;
+    fgets(linea, sizeof(linea), archivo_ipc_aperturas);
+    fprintf(archivo_ipc_aperturas_actualizado, "%s", linea);
+
+    while (fgets(linea, sizeof(linea), archivo_ipc_aperturas))
+    {
+        trozarLineaAperturas(linea,&reg);
+
+        //Ejercicio 7
+        convertirFormatoFecha(reg.periodo);
+        //Ejercicio 8
+            //Se reutiliza la funcion del punto 4
+        convertirComaAPunto(reg.indice_ipc);
+        
+        fprintf(archivo_ipc_aperturas_actualizado,"%s;%s;%s;%s;%s;%.2f;%.2f;%s\n",reg.codigo,reg.descripcion,reg.clasificador,reg.periodo,reg.indice_ipc,reg.variacion_mensual,reg.variacion_interanual,reg.region);
+    }
+
+    fclose(archivo_ipc_aperturas);
+    fclose(archivo_ipc_aperturas_actualizado);
+    remove(nomArchAper);
+    rename(nomArchAperTemp,nomArchAper);
+    return TODO_OK;
+}
 // 7
     // Función para convertir AAAAMM → AAAA-MM-DD
-void convertirPeriodo(const char *periodo, char *fechaConvertida)
+void convertirFormatoFecha(char *periodo)
 {
     char anio[5];
     char mes[3];
@@ -654,80 +674,31 @@ void convertirPeriodo(const char *periodo, char *fechaConvertida)
     strncpy(mes, periodo + 4, 2);
     mes[2] = '\0';
 
-    sprintf(fechaConvertida, "%s-%s-01", anio, mes);
+    sprintf(periodo, "%s-%s-01", anio, mes);
 }
 
-int septimoEjercicio(const char *nombreDeEntrada)
-{
-    FILE *entrada = fopen(nombreDeEntrada, "r");
-    FILE *salida = fopen("serie_ipc_aperturas_convertido.csv", "w");
-
-    if (!entrada || !salida)
-    {
-        perror("Error al abrir archivos");
-        return 1;
-    }
-
-    char linea[MAX_LINEA];
-    int esPrimera = 1;
-
-    while (fgets(linea, sizeof(linea), entrada))
-    {
-        // Si es la primera línea (encabezado), agregamos una nueva columna
-        if (esPrimera)
-        {
-            fprintf(salida, "%s,Fecha_convertida\n", strtok(linea, "\n"));
-            esPrimera = 0;
-            continue;
-        }
-
-        // Variables para almacenar campos
-        char codigo[21], descripcion[31], clasificador[31];
-        char periodo[7], indice[32], v_m_ipc[32], v_i_a_ipc[32], region[10];
-        char fecha[11];
-
-        // Leemos línea separada por punto y coma
-        int campos = sscanf(linea, "%20[^;];%30[^;];%30[^;];%6[^;];%31[^;];%31[^;];%31[^;];%9[^\n]",
-                            codigo, descripcion, clasificador, periodo,
-                            indice, v_m_ipc, v_i_a_ipc, region);
-
-        if (campos == 8)
-        {
-            convertirPeriodo(periodo, fecha);
-            fprintf(salida, "%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
-                    codigo, descripcion, clasificador, periodo,
-                    indice, v_m_ipc, v_i_a_ipc, region, fecha);
-        }
-    }
-
-    fclose(entrada);
-    fclose(salida);
-   remove(nombreDeEntrada);
-    rename("serie_ipc_aperturas_convertido.csv", nombreDeEntrada);
-    return 0;
-}
-/*
-// 8
-// Se reutiliza la función del punto 4
+// 8 // Se reutiliza la función del punto 4
 
 // 9
-void calcularAjusteAlquiler() {
+void calcularAjusteAlquiler(const char* nomArchAperturas) {
     float monto;
     char region[10];
     int fechaInicio;
     double ipcInicio = 0, ipcMax = 0;
-    int fechaMax = 0;
+    char fechaMaxStr[11]="";
+
+    FILE* archivo_aperturas = fopen(nomArchAperturas, "r");
+    if (archivo_aperturas == NULL) {
+        printf("\nError al abrir el archivo serie_ipc_aperturas.csv");
+        return;
+    }
 
     solicitarMonto(&monto);
     solicitarRegion(region);
     printf("--- Ingrese el Periodo de Inicio de Contrato ---\n");
     solicitarFecha(&fechaInicio);
-
-    FILE* archivo_aperturas = fopen(FILENAME_APERTURAS, "r");
-    if (archivo_aperturas == NULL) {
-        printf("\nError al abrir el archivo serie_ipc_aperturas.csv");
-        return;
-    }
+    char fechaIniStr[11];
+    sprintf(fechaIniStr, "%d-%02d-01", fechaInicio / 100, fechaInicio % 100);
 
     char buffer[500];
     RegistroIPC ra;
@@ -741,8 +712,8 @@ void calcularAjusteAlquiler() {
         if (trozarLineaAperturas(buffer, &ra)) {
             if (strcmpi(ra.descripcion, FILTRO_DESCRIPCION_ALQUILER) == 0 && strcmpi(ra.region, region) == 0) {
 
-                if (ra.periodo == fechaInicio) {
-                    ipcInicio = ra.indice_ipc;
+                if (strcmp(ra.periodo, fechaIniStr) == 0) {
+                    ipcInicio = atof(ra.indice_ipc);
                     encontradoInicio = 1;
                 }
 
@@ -750,9 +721,9 @@ void calcularAjusteAlquiler() {
                     registros_encontrados[count++] = ra;
 
 
-                    if (ra.periodo > fechaMax) {
-                        fechaMax = ra.periodo;
-                        ipcMax = ra.indice_ipc;
+                    if (strcmp(ra.periodo, fechaMaxStr) > 0) {
+                        strcpy(fechaMaxStr, ra.periodo);
+                        ipcMax = atof(ra.indice_ipc);
                     }
                 }
             }
@@ -792,18 +763,12 @@ void calcularAjusteAlquiler() {
         ra = registros_encontrados[i];
 
         // Llenar la struct 'fila' para la tabla
-        sprintf(fila.periodo, "%d-%02d", ra.periodo / 100, ra.periodo % 100); // anio y mes
-        fila.indice = ra.indice_ipc;
+        strncpy(fila.periodo, ra.periodo, 7); //agarro los AAAA-MM
+        fila.periodo[7] = '\0';
+        fila.indice = atof(ra.indice_ipc);
         //variación y monto contra el índice INICIAL
-        fila.variacionPct = ((ra.indice_ipc / ipcInicio )-1) * 100;
-        fila.montoAjustado = monto * (ra.indice_ipc / ipcInicio);
-
-        
-        //printf("%-10s %-12.2f %-12.2f %-15.2f\n",
-        //       fila.periodo,
-        //       fila.indice,
-        //       fila.variacionPct,
-        //       fila.montoAjustado);
+        fila.variacionPct = ((atof(ra.indice_ipc) / ipcInicio )-1) * 100;
+        fila.montoAjustado = monto * (atof(ra.indice_ipc) / ipcInicio);
 
         fwrite(&fila, sizeof(FilaTablaAlquiler), 1, archivo_binario);
     }
@@ -832,6 +797,3 @@ void leerMostrarTablaBinario(const char* nombreArchivo) {
     }
     fclose(archivo);
 }
-*/
-
-

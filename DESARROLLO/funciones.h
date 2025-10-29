@@ -6,12 +6,14 @@
 
 // Convención nombre de funciones : primer palabra en minuscula, la siguiente empiezan con mayuscula.
 
-//void limpiarCampo(char *campo);
+void limpiarCampo(char *campo);
 void mostrarPalabra(const char *p);
 bool leerRegistroIPC(char* nomArch, RegistroIPC* reg);
 bool leerArchivoCompletoIPC(char* nomArch);
 bool trozarLineaDivisiones(char buffer[], RegistroIPC *registro);
+bool trozarLineaAperturas(char linea[], RegistroIPC *registro);
 
+int actualizarArchivoDivisiones(const char* nomArchDivisiones,const char* nomArchTemporal);
 //1
 char decodificarDigito(char c);
 void decodificarFecha(char* fechaE);
@@ -34,20 +36,19 @@ int obtenerNumeroMes(const char *mesTexto);
 void calcularIPCPorGrupos(const char* nomArchivo_ipc, Vector* grupos);
 void mostrarPromedios(Vector* vec);
 void clasificarGrupo(const char* descripcion, char *grupo);
+
+int actualizarArchivoAperturas(const char* nomArchAper,const char* nomArchAperTemp);
 //7
-int septimoEjercicio(const char *nombreDeEntrada);
-
-void convertirPeriodo(const char *periodo, char *fechaConvertida);
-
+void convertirFormatoFecha(char *periodo);
+//8 Funcion4
 //9
+void calcularAjusteAlquiler(const char* nomArchAperturas);
 void leerMostrarTablaBinario(const char*);
 
 
 static bool redimensionarVector(Vector* vec, double factorInc);
-
-bool vectorCrear(Vector* vec, size_t tamElem);
+int vectorCrear(Vector* vector, size_t tamElem);
 void vectorDestruir(Vector* vec);
-
 int vectorInsertar(Vector* vec, void* elem);
 #endif // FUNCIONES_H_INCLUDED
 
