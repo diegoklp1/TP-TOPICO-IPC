@@ -40,7 +40,7 @@ bool leerRegistroIPC(char* nomArch, RegistroIPC* reg)
     FILE* fpArch = fopen(nomArch, "r");
     if (!fpArch)
     {
-        puts("ERROR: No se pudo abrir el archivo.");
+        puts("ERROR: No se pudo abrir el archivo.\n");
         return false;
     }
 
@@ -298,13 +298,13 @@ int actualizarArchivoDivisiones(const char* nomArchDivisiones,const char* nomArc
 {
     FILE* archivo_ipc = fopen(nomArchDivisiones, "r");
     if (!archivo_ipc) {
-        puts("Error al abrir el archivo");
+        puts("Error al abrir el archivo\n");
         return ERR_ARCHIVO;
     }
     FILE* archivo_ipc_act = fopen(nomArchTemporal, "w");
     if (!archivo_ipc_act) {
         fclose(archivo_ipc);
-        puts("Error al crear el archivo actualizado");
+        puts("Error al crear el archivo actualizado\n");
         return ERR_ARCHIVO;
     }
 
@@ -426,7 +426,7 @@ void calcularMontoAjustadoPorIPC(const char* nomArchivoIpc) {
     FILE* fPArchIpc = fopen(nomArchivoIpc,"r");
     if(!fPArchIpc)
     {
-        puts("ERROR PARA ABRIR ARCHIVO DE DIVISIONES");
+        puts("ERROR PARA ABRIR ARCHIVO DE DIVISIONES\n");
         return;
     }
     
@@ -461,7 +461,7 @@ void calcularMontoAjustadoPorIPC(const char* nomArchivoIpc) {
 
     //Informamos los resultados
     if (ipcInicio == 0 || ipcFin == 0) {
-        printf("No se encontraron los datos del IPC");
+        printf("No se encontraron los datos del IPC\n");
     }else {
         printf("Monto inicial: %.2f \n Monto ajustado: %.2f\n", monto, monto * (ipcFin / ipcInicio));
         printf("Variacion porcentual: %.2f\n", (ipcFin / ipcInicio - 1) * 100);
@@ -502,7 +502,7 @@ int obtenerNumeroMes(const char *mesTexto) {
 
 
 void solicitarMonto(float *monto) {
-    printf("Ingrese el monto a evaluar:");
+    printf("Ingrese el monto a evaluar:\n");
     scanf("%f", monto);
     fflush(stdin);
 }
@@ -517,7 +517,7 @@ void solicitarRegion(char *region) {
            "4. Cuyo\n"
            "5. Noroeste\n"
            "6. Noreste\n"
-           "7. Patagonia");
+           "7. Patagonia\n");
         scanf("%d", &idRegion);
         fflush(stdin);
         if (idRegion < 1 || idRegion > 7)
@@ -537,7 +537,7 @@ void solicitarRegion(char *region) {
 }
 
 void solicitarFecha(int *fecha) {
-    printf("Ingrese la fecha con formato aaaamm: ");
+    printf("Ingrese la fecha con formato aaaamm: \n");
     scanf("%d", fecha);
 }
 
@@ -546,7 +546,7 @@ void calcularIPCPorGrupos(const char* nomArchivo_ipc, Vector* grupos) {
     FILE* fPArchIpc = fopen(nomArchivo_ipc,"r");
     if(!fPArchIpc)
     {
-        puts("ERROR PARA ABRIR ARCHIVO DE DIVISIONES");
+        puts("ERROR PARA ABRIR ARCHIVO DE DIVISIONES\n");
         return;
     }
     char buffer[500];
@@ -597,7 +597,7 @@ void mostrarPromedios(Vector* grupos) {
 
     for (size_t i = 0; i < grupos->cantidadElementos; i++) {
         if (periodoActual != clasificacion[i].periodo && periodoActual != 0) {
-            printf("\nFecha %d-%d -> Bienes: %.2f | Servicios: %.2f",
+            printf("Fecha %d-%d -> Bienes: %.2f | Servicios: %.2f\n",
                    periodoActual / 100,perioActual % 100,
                    cantBienes ? sumaBienes / cantBienes : 0,
                    cantServicios ? sumaServicios / cantServicios : 0);
@@ -618,7 +618,7 @@ void mostrarPromedios(Vector* grupos) {
     }
 
     if (cantBienes + cantServicios > 0) {
-        printf("\nFecha %d-%d -> Bienes: %.2f | Servicios: %.2f",
+        printf("Fecha %d-%d -> Bienes: %.2f | Servicios: %.2f\n",
                    periodoActual / 100,perioActual % 100,
                cantBienes ? sumaBienes / cantBienes : 0,
                cantServicios ? sumaServicios / cantServicios : 0);
@@ -629,7 +629,7 @@ int actualizarArchivoAperturas(const char* nomArchAper,const char* nomArchAperTe
 {
     FILE* archivo_ipc_aperturas = fopen(nomArchAper, "r");
     if (!archivo_ipc_aperturas) {
-        puts("Error al abrir el archivo de aperturas");
+        puts("Error al abrir el archivo de aperturas\n");
         return 1;
     }
     FILE* archivo_ipc_aperturas_actualizado = fopen(nomArchAperTemp, "w");
@@ -689,7 +689,7 @@ void calcularAjusteAlquiler(const char* nomArchAperturas) {
 
     FILE* archivo_aperturas = fopen(nomArchAperturas, "r");
     if (archivo_aperturas == NULL) {
-        printf("\nError al abrir el archivo serie_ipc_aperturas.csv");
+        printf("Error al abrir el archivo serie_ipc_aperturas.csv\n");
         return;
     }
 
@@ -797,5 +797,6 @@ void leerMostrarTablaBinario(const char* nombreArchivo) {
     }
     fclose(archivo);
 }
+
 
 
