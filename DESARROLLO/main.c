@@ -597,8 +597,8 @@ void mostrarPromedios(Vector* grupos) {
 
     for (size_t i = 0; i < grupos->cantidadElementos; i++) {
         if (periodoActual != clasificacion[i].periodo && periodoActual != 0) {
-            printf("\nPeriodo %d -> Bienes: %.2f | Servicios: %.2f",
-                   periodoActual,
+            printf("\nFecha %d-%d -> Bienes: %.2f | Servicios: %.2f",
+                   periodoActual / 100,perioActual % 100,
                    cantBienes ? sumaBienes / cantBienes : 0,
                    cantServicios ? sumaServicios / cantServicios : 0);
 
@@ -618,8 +618,8 @@ void mostrarPromedios(Vector* grupos) {
     }
 
     if (cantBienes + cantServicios > 0) {
-        printf("\nPeriodo %d -> Bienes: %.2f | Servicios: %.2f\n",
-               periodoActual,
+        printf("\nFecha %d-%d -> Bienes: %.2f | Servicios: %.2f",
+                   periodoActual / 100,perioActual % 100,
                cantBienes ? sumaBienes / cantBienes : 0,
                cantServicios ? sumaServicios / cantServicios : 0);
     }
@@ -797,4 +797,5 @@ void leerMostrarTablaBinario(const char* nombreArchivo) {
     }
     fclose(archivo);
 }
+
 
