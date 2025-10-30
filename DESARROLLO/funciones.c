@@ -441,7 +441,7 @@ void calcularMontoAjustadoPorIPC(const char* nomArchivoIpc) {
     if (ipcInicio == 0 || ipcFin == 0) {
         printf("No se encontraron los datos del IPC\n");
     }else {
-        printf("- Monto inicial: %.2f | IPCINI : %.2f | IPCFIN : %.2f \n - Monto ajustado: %.2f\n", monto,ipcInicio,ipcFin, monto * (ipcFin / ipcInicio));
+        printf("- Monto inicial: %.2f \t| IPCINI : %.2f | IPCFIN : %.2f \n- Monto ajustado: %.2f\n", monto,ipcInicio,ipcFin, monto * (ipcFin / ipcInicio));
         printf("- Variacion porcentual: %.2f\n", (ipcFin / ipcInicio - 1) * 100);
     }
 
@@ -488,7 +488,7 @@ void solicitarMonto(float *monto) {
             printf("\nERROR, INGRESE UN DATO VALIDO\n");
         error=1;
         scanf("%f",monto);
-    }while(*monto < 0);
+    }while(*monto <= 0);
     fflush(stdin);
 }
 void solicitarRegion(char *region) {
@@ -592,9 +592,10 @@ void mostrarPromedios(Vector* grupos) {
 
     Clasificacion* clasificacion = grupos->vector;
 
+    printf("\n%-7s | %7s | %7s","FECHA","BIENES","SERVICIOS\n");
     for (size_t i = 0; i < grupos->cantidadElementos; i++) {
         if (periodoActual != clasificacion[i].periodo && periodoActual != 0) {
-            printf("Fecha %4d-%02d -> Bienes: %.2f | Servicios: %.2f\n",
+            printf("%4d-%02d | %7.2f | %7.2f\n",
                    periodoActual / 100,periodoActual % 100,
                    cantBienes ? sumaBienes / cantBienes : 0,
                    cantServicios ? sumaServicios / cantServicios : 0);
@@ -615,7 +616,7 @@ void mostrarPromedios(Vector* grupos) {
     }
 
     if (cantBienes + cantServicios > 0) {
-        printf("Fecha %4d-%02d -> Bienes: %.2f | Servicios: %.2f\n",
+        printf("%4d-%02d | %7.2f | %7.2f\n",
                    periodoActual / 100,periodoActual % 100,
                cantBienes ? sumaBienes / cantBienes : 0,
                cantServicios ? sumaServicios / cantServicios : 0);
