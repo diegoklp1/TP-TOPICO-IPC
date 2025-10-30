@@ -1,0 +1,21 @@
+# depslib dependency file v1.0
+1761835964 source:d:\diego\downloads\tp-topico-ipc-main\desarrollo\estructuras.c
+	<stdio.h>
+
+1761855370 source:d:\diego\downloads\tp-topico-ipc-main\desarrollo\main.c
+	"funciones.h"
+
+1761854384 d:\diego\downloads\tp-topico-ipc-main\desarrollo\funciones.h
+	<stdbool.h>
+	<stdio.h>
+	<ctype.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
+1761742261 d:\diego\downloads\tp-topico-ipc-main\desarrollo\estructuras.c
+	<stdio.h>
+
+1761855324 source:d:\diego\downloads\tp-topico-ipc-main\desarrollo\funciones.c
+	"funciones.h"
+
