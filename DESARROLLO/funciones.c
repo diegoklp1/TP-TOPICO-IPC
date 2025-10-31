@@ -376,7 +376,7 @@ void normalizarDescripcion(char *pLec) {
         else
         {
             *pEscr = * pLec;
-            
+
         }
         pEscr++;
         pLec++;
@@ -563,12 +563,12 @@ void calcularIPCPorGrupos(const char* nomArchivo_ipc, Vector* grupos) {
 int compararClasificacionPorPeriodo(const void* a, const void* b) {
     Clasificacion* clasifA = (Clasificacion*)a;
     Clasificacion* clasifB = (Clasificacion*)b;
-    
+
     return (clasifA->periodo - clasifB->periodo);
 }
 void clasificarGrupo(const char* descripcion, char *grupo) {
 
-    
+
 
     if (strcmpi(descripcion, "Alimentos y bebidas no alcohólicas") == 0 ||
         strcmpi(descripcion, "Bebidas alcohólicas y tabaco") == 0 ||
@@ -689,7 +689,13 @@ void calcularAjusteAlquiler(const char* nomArchAperturas) {
 
     FILE* archivo_aperturas = fopen(nomArchAperturas, "r");
     if (archivo_aperturas == NULL) {
-        printf("Error al abrir el archivo serie_ipc_aperturas.csv\n");
+        printf("\nError al abrir el archivo serie_ipc_aperturas.csv\n");
+        return;
+    }
+
+    FILE* archivo_binario = fopen(ARCHIVO_BINARIO_SALIDA, "wb");
+    if (archivo_binario == NULL) {
+        printf("\nError al crear archivo binario de salida\n");
         return;
     }
 
@@ -702,23 +708,27 @@ void calcularAjusteAlquiler(const char* nomArchAperturas) {
 
     char buffer[500];
     RegistroIPC ra;
-    RegistroIPC registros_encontrados[MAX_MESES_REPORTE];
-    int count = 0;
     int encontradoInicio = 0;
 
     fgets(buffer, sizeof(buffer), archivo_aperturas);
 
     while (fgets(buffer, sizeof(buffer), archivo_aperturas)) {
         if (trozarLineaAperturas(buffer, &ra)) {
-            if (strcmpi(ra.descripcion, FILTRO_DESCRIPCION_ALQUILER) == 0 && strcmpi(ra.region, region) == 0) {
+            if (strcmp(ra.descripcion, FILTRO_DESCRIPCION_ALQUILER) == 0 && strcmp(ra.region, region) == 0) {
 
                 if (strcmp(ra.periodo, fechaIniStr) == 0) {
                     ipcInicio = atof(ra.indice_ipc);
                     encontradoInicio = 1;
                 }
 
-                if (encontradoInicio && count < MAX_MESES_REPORTE) {
-                    registros_encontrados[count++] = ra;
+                if (encontradoInicio) {
+                    FilaTablaAlquiler fila;
+                    strncpy(fila.periodo, ra.periodo, 7);
+                    fila.periodo[7] = '\0';
+                    fila.indice = atof(ra.indice_ipc);
+                    fila.variacionPct = ((atof(ra.indice_ipc) / ipcInicio) - 1) * 100;
+                    fila.montoAjustado = monto * (atof(ra.indice_ipc) / ipcInicio);
+                    fwrite(&fila, sizeof(FilaTablaAlquiler), 1, archivo_binario);
 
 
                     if (strcmp(ra.periodo, fechaMaxStr) > 0) {
@@ -731,7 +741,7 @@ void calcularAjusteAlquiler(const char* nomArchAperturas) {
     }
     fclose(archivo_aperturas);
 
-    if (ipcInicio == 0 || count == 0) {
+    if (ipcInicio == 0) {
         printf("Error: No se pudo encontrar el indice de inicio para la region y fecha dadas.\n");
         return;
     }
@@ -744,30 +754,9 @@ void calcularAjusteAlquiler(const char* nomArchAperturas) {
     printf("Monto ajustado:      $ %.2f\n", montoAjustadoTotal);
     printf("Variacion porcentual:  %.2f %%\n", variacionTotal);
 
-    FILE* archivo_binario = fopen(ARCHIVO_BINARIO_SALIDA, "wb");
-    if (archivo_binario == NULL) {
-        perror("Error al crear archivo binario de salida");
-        return;
-    }
-
-    FilaTablaAlquiler fila;
-
-    //Iterar sobre los registros guardados para generar la tabla
-    for (int i = 0; i < count; i++) {
-        ra = registros_encontrados[i];
-
-        // Llenar la struct 'fila' para la tabla
-        strncpy(fila.periodo, ra.periodo, 7); //agarro los AAAA-MM
-        fila.periodo[7] = '\0';
-        fila.indice = atof(ra.indice_ipc);
-        //variación y monto contra el índice INICIAL
-        fila.variacionPct = ((atof(ra.indice_ipc) / ipcInicio )-1) * 100;
-        fila.montoAjustado = monto * (atof(ra.indice_ipc) / ipcInicio);
-
-        fwrite(&fila, sizeof(FilaTablaAlquiler), 1, archivo_binario);
-    }
-
     fclose(archivo_binario);
+
+    leerMostrarTablaBinario(ARCHIVO_BINARIO_SALIDA);
 }
 void leerMostrarTablaBinario(const char* nombreArchivo) {
     FILE* archivo = fopen(nombreArchivo, "rb");
