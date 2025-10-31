@@ -559,9 +559,16 @@ void calcularIPCPorGrupos(const char* nomArchivo_ipc, Vector* grupos) {
             }
         }
     }
+    qsort(grupos->vector,grupos->cantidadElementos,sizeof(Clasificacion),compararClasificacionPorPeriodo);
     mostrarPromedios(grupos);
 
     fclose(fPArchIpc);
+}
+int compararClasificacionPorPeriodo(const void* a, const void* b) {
+    Clasificacion* clasifA = (Clasificacion*)a;
+    Clasificacion* clasifB = (Clasificacion*)b;
+    
+    return (clasifA->periodo - clasifB->periodo);
 }
 void clasificarGrupo(const char* descripcion, char *grupo) {
 

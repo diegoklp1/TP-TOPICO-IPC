@@ -80,6 +80,7 @@ int convertirFechaStringAInt(const char *fechaFormateada);
 int obtenerNumeroMes(const char *mesTexto);
 //6
 void calcularIPCPorGrupos(const char* nomArchivo_ipc, Vector* grupos);
+int compararClasificacionPorPeriodo(const void* a, const void* b);
 void mostrarPromedios(Vector* vec);
 void clasificarGrupo(const char* descripcion, char *grupo);
 
