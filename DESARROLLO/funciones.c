@@ -39,21 +39,21 @@ void vectorDestruir(Vector* vector)
     vector->cantidadElementos = 0;
     vector->capacidad = 0;
 }
-bool redimensionarVector(Vector* vector, double factorInc)
+int redimensionarVector(Vector* vector, double factorInc)
 {
     size_t nuevaCap = (size_t)vector->capacidad*factorInc;
     void* vectorTemporal = realloc(vector->vector,nuevaCap* vector->tamanioElemento);
 
     if(!(vectorTemporal)){
-        return false;
+        return FALSE;
     }
 
-    //printf("Redimension de %d a %d\n", vector->capacidad, nuevaCap);
+    /*printf("Redimension de %d a %d\n", vector->capacidad, nuevaCap);*/
 
     vector->vector = vectorTemporal;
     vector->capacidad = nuevaCap;
 
-    return true;
+    return TRUE;
 }
 
 int vectorInsertar(Vector* vector, void* elemento)
@@ -71,17 +71,16 @@ int vectorInsertar(Vector* vector, void* elemento)
     return TODO_OK;
 }
 
-bool leerRegistroIPC(char* nomArch, RegistroIPC* reg)
+int leerRegistroIPC(char* nomArch, RegistroIPC* reg)
 {
     FILE* fpArch = fopen(nomArch, "r");
     if (!fpArch)
     {
         puts("ERROR: No se pudo abrir el archivo.\n");
-        return false;
+        return FALSE;
     }
 
     char linea[500];
-    // Se salta la línea del encabezado
     fgets(linea, sizeof(linea), fpArch);
 
     fgets(linea, sizeof(linea), fpArch);
@@ -97,15 +96,15 @@ bool leerRegistroIPC(char* nomArch, RegistroIPC* reg)
     }
 
     fclose(fpArch);
-    return true;
+    return TRUE;
 }
-bool leerArchivoCompletoIPC(char* nomArch)
+int leerArchivoCompletoIPC(char* nomArch)
 {
     FILE* fpArch = fopen(nomArch, "r");
     if (!fpArch)
     {
         puts("ERROR: No se pudo abrir el archivo.");
-        return false;
+        return FALSE;
     }
 
     char linea[500];
@@ -127,64 +126,64 @@ bool leerArchivoCompletoIPC(char* nomArch)
     }
 
     fclose(fpArch);
-    return true;
+    return TRUE;
 }
 
-bool trozarLineaDivisiones(char linea[], RegistroIPC *registro)
+int trozarLineaDivisiones(char linea[], RegistroIPC *registro)
 {
     char* pos;
     pos = strchr(linea, '\n');
     if (!pos) {
-        return false;
+        return FALSE;
     }
 
     *pos = '\0';
     //periodo
     pos = strrchr(linea, ';');
     if (!pos)
-        return false;
+        return FALSE;
     limpiarCampo(pos+1);
     strcpy(registro->periodo, pos + 1);
 
     *pos = '\0';
     //region
     pos = strrchr(linea, ';');
-    if (!pos) return false;
+    if (!pos) return FALSE;
     limpiarCampo(pos+1);
     strcpy(registro->region, pos + 1);
     *pos = '\0';
 
     //variacion_interanual
     pos = strrchr(linea, ';');
-    if (!pos) return false;
+    if (!pos) return FALSE;
     convertirComaAPunto(pos + 1);
     strcpy(registro->variacion_interanual, pos + 1);
     *pos = '\0';
 
     //variacion_mensual
     pos = strrchr(linea, ';');
-    if (!pos) return false;
+    if (!pos) return FALSE;
     convertirComaAPunto(pos + 1);
     strcpy(registro->variacion_mensual, pos + 1);
     *pos = '\0';
 
     //indice_ipc
     pos = strrchr(linea, ';');
-    if (!pos) return false;
+    if (!pos) return FALSE;
     limpiarCampo(pos+1);
     strcpy(registro->indice_ipc, pos + 1);
     *pos = '\0';
 
     //clasificador
     pos = strrchr(linea, ';');
-    if (!pos) return false;
+    if (!pos) return FALSE;
     limpiarCampo(pos+1);
     strcpy(registro->clasificador, pos + 1);
     *pos = '\0';
 
     //descripcion
     pos = strrchr(linea, ';');
-    if (!pos) return false;
+    if (!pos) return FALSE;
     limpiarCampo(pos+1);
     strcpy(registro->descripcion, pos + 1);
     *pos = '\0';
@@ -193,41 +192,41 @@ bool trozarLineaDivisiones(char linea[], RegistroIPC *registro)
     limpiarCampo(linea);
     strcpy(registro->codigo, linea);
 
-    return true;
+    return TRUE;
 }
-bool trozarLineaAperturas(char linea[], RegistroIPC *registro)
+int trozarLineaAperturas(char linea[], RegistroIPC *registro)
 {
     char* pos;
     pos = strchr(linea, '\n');
     if (!pos) {
-        return false;
+        return FALSE;
     }
 
     *pos = '\0';
     //region
     pos = strrchr(linea, ';');
-    if (!pos) return false;
+    if (!pos) return FALSE;
     limpiarCampo(pos+1);
     strcpy(registro->region, pos + 1);
     *pos = '\0';
 
     //variacion_interanual
     pos = strrchr(linea, ';');
-    if (!pos) return false;
+    if (!pos) return FALSE;
     convertirComaAPunto(pos + 1);
     strcpy(registro->variacion_interanual, pos + 1);
     *pos = '\0';
 
     //variacion_mensual
     pos = strrchr(linea, ';');
-    if (!pos) return false;
+    if (!pos) return FALSE;
     convertirComaAPunto(pos + 1);
     strcpy(registro->variacion_mensual, pos + 1);
     *pos = '\0';
 
     //indice_ipc
     pos = strrchr(linea, ';');
-    if (!pos) return false;
+    if (!pos) return FALSE;
     limpiarCampo(pos+1);
     strcpy(registro->indice_ipc, pos + 1);
     *pos = '\0';
@@ -235,21 +234,21 @@ bool trozarLineaAperturas(char linea[], RegistroIPC *registro)
     //periodo
     pos = strrchr(linea, ';');
     if (!pos)
-        return false;
+        return FALSE;
     limpiarCampo(pos+1);
     strcpy(registro->periodo, pos + 1);
     *pos = '\0';
 
     //clasificador
     pos = strrchr(linea, ';');
-    if (!pos) return false;
+    if (!pos) return FALSE;
     limpiarCampo(pos+1);
     strcpy(registro->clasificador, pos + 1);
     *pos = '\0';
 
     //descripcion
     pos = strrchr(linea, ';');
-    if (!pos) return false;
+    if (!pos) return FALSE;
     limpiarCampo(pos+1);
     strcpy(registro->descripcion, pos + 1);
     *pos = '\0';
@@ -258,7 +257,7 @@ bool trozarLineaAperturas(char linea[], RegistroIPC *registro)
     limpiarCampo(linea);
     strcpy(registro->codigo, linea);
 
-    return true;
+    return TRUE;
 }
 
 int actualizarArchivoDivisiones(const char* nomArchDivisiones,const char* nomArchTemporal)
@@ -302,7 +301,7 @@ int actualizarArchivoDivisiones(const char* nomArchDivisiones,const char* nomArc
 
     return TODO_OK;
 }
-// 1 : DECODIFICAR FECHA
+/* 1 : DECODIFICAR FECHA */
 char decodificarDigito(char c) {
     switch (c) {
         case '7': return '0';
@@ -327,7 +326,7 @@ void decodificarFecha(char* fecha_codif) {
         i++;
     }
 }
-// 2 : CONVERTIR FECHA DE NUMERO A CADENA
+/* 2 : CONVERTIR FECHA DE NUMERO A CADENA */
 void convertirFecha(char* fechaText){
 
     char* meses[] = {"", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio","Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"};
@@ -354,7 +353,7 @@ void mostrarPalabra(const char *p) {
     putchar('\n');
 }
 
-// 3: Normalizar descripción
+/* 3: Normalizar descripción */
 void normalizarDescripcion(char *pLec) {
     char* pEscr = pLec;
 
@@ -385,7 +384,7 @@ void normalizarDescripcion(char *pLec) {
     *pEscr = '\0';
 }
 
-// 4: Convertir coma a punto
+/* 4: Convertir coma a punto */
 void convertirComaAPunto(char *p) {
     while (*p) {
         if (*p == ',') {
@@ -396,7 +395,7 @@ void convertirComaAPunto(char *p) {
 }
 
 
-// 5: Cálculo del monto ajustado por IPC
+/* 5: Cálculo del monto ajustado por IPC */
 void calcularMontoAjustadoPorIPC(const char* nomArchivoIpc) {
     FILE* fPArchIpc = fopen(nomArchivoIpc,"r");
     if(!fPArchIpc)
@@ -459,15 +458,15 @@ int convertirFechaStringAInt(const char *fechaFormateada) {
 }
 int obtenerNumeroMes(const char *mesTexto) {
     const char *meses[] = {
-        "enero", "febrero", "marzo", "abril", "mayo", "junio",
-        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
     };
 
     const char **ptr = meses;
     int numero = 1;
 
     while (numero <= 12) {
-        if (strcmpi(mesTexto, *ptr) == 0)
+        if (strcmp(mesTexto, *ptr) == 0)
             return numero;
         ptr++;
         numero++;
@@ -532,7 +531,7 @@ void solicitarFecha(int *fecha) {
     } while (anio <= 1000 || anio > 9999 || mes < 1 || mes > 12);
 }
 
-// 6 Evolución del IPC por grupos
+/* 6 Evolución del IPC por grupos */
 void calcularIPCPorGrupos(const char* nomArchivo_ipc, Vector* grupos) {
     FILE* fPArchIpc = fopen(nomArchivo_ipc,"r");
     if(!fPArchIpc)
@@ -546,7 +545,7 @@ void calcularIPCPorGrupos(const char* nomArchivo_ipc, Vector* grupos) {
     Clasificacion clasificacion;
     while (fgets(buffer, sizeof(buffer), fPArchIpc)) {
         if (trozarLineaDivisiones(buffer, &reg)) {
-            if (strcmpi(reg.region, "nacional") == 0) {
+            if (strcmp(reg.region, "Nacional") == 0) {
                 clasificacion.periodo = convertirFechaStringAInt(reg.periodo);
                 strcpy(clasificacion.descripcion, reg.descripcion);
                 clasificacion.indice_ipc = atof(reg.indice_ipc);
@@ -571,19 +570,19 @@ void clasificarGrupo(const char* descripcion, char *grupo) {
 
     
 
-    if (strcmpi(descripcion, "alimentos y bebidas no alcohólicas") == 0 ||
-        strcmpi(descripcion, "bebidas alcohólicas y tabaco") == 0 ||
-        strcmpi(descripcion, "prendas de vestir y calzado") == 0 ||
-        strcmpi(descripcion, "bienes y servicios varios") == 0 ||
-        strcmpi(descripcion, "equipamiento y mantenimiento del hogar") == 0) {
+    if (strcmpi(descripcion, "Alimentos y bebidas no alcohólicas") == 0 ||
+        strcmpi(descripcion, "Bebidas alcohólicas y tabaco") == 0 ||
+        strcmpi(descripcion, "Prendas de vestir y calzado") == 0 ||
+        strcmpi(descripcion, "Bienes y servicios varios") == 0 ||
+        strcmpi(descripcion, "Equipamiento y mantenimiento del hogar") == 0) {
         strcpy(grupo, "Bienes");
-    } else if (strcmpi(descripcion, "recreacion y cultura") == 0 ||
-        strcmpi(descripcion, "restaurantes y hoteles") == 0 ||
-        strcmpi(descripcion, "salud") == 0 ||
-        strcmpi(descripcion, "transporte") == 0 ||
-        strcmpi(descripcion, "educación") == 0 ||
-        strcmpi(descripcion, "comunicación") == 0 ||
-        strcmpi(descripcion, "vivienda, agua, electricidad, gas y otros combustibles") == 0) {
+    } else if (strcmpi(descripcion, "Recreacion y cultura") == 0 ||
+        strcmpi(descripcion, "Restaurantes y hoteles") == 0 ||
+        strcmpi(descripcion, "Salud") == 0 ||
+        strcmpi(descripcion, "Transporte") == 0 ||
+        strcmpi(descripcion, "Educación") == 0 ||
+        strcmpi(descripcion, "Comunicación") == 0 ||
+        strcmpi(descripcion, "Vivienda, agua, electricidad, gas y otros combustibles") == 0) {
         strcpy(grupo, "Servicios");
     } else {
         strcpy(grupo, "Otro");
@@ -664,8 +663,7 @@ int actualizarArchivoAperturas(const char* nomArchAper,const char* nomArchAperTe
     rename(nomArchAperTemp,nomArchAper);
     return TODO_OK;
 }
-// 7
-    // Función para convertir AAAAMM → AAAA-MM-DD
+/* 7 */
 void convertirFormatoFecha(char *periodo)
 {
     char anio[5];
@@ -679,9 +677,9 @@ void convertirFormatoFecha(char *periodo)
     sprintf(periodo, "%s-%s-01", anio, mes);
 }
 
-// 8 Se reutiliza la función del punto 4
+/* 8 Se reutiliza la función del punto 4 */
 
-// 9
+/* 9 */
 void calcularAjusteAlquiler(const char* nomArchAperturas) {
     float monto;
     char region[10];
@@ -708,7 +706,7 @@ void calcularAjusteAlquiler(const char* nomArchAperturas) {
     int count = 0;
     int encontradoInicio = 0;
 
-    fgets(buffer, sizeof(buffer), archivo_aperturas); // Saltar encabezado
+    fgets(buffer, sizeof(buffer), archivo_aperturas);
 
     while (fgets(buffer, sizeof(buffer), archivo_aperturas)) {
         if (trozarLineaAperturas(buffer, &ra)) {
@@ -782,7 +780,6 @@ void leerMostrarTablaBinario(const char* nombreArchivo) {
     printf("-----------------------------------------------------------\n");
 
     FilaTablaAlquiler fila;
-    // Lee registros del tamaño de la struct FilaTablaAlquiler, 1 a la vez
     while (fread(&fila, sizeof(FilaTablaAlquiler), 1, archivo) == 1) {
         printf("%-10s %-12.2f %-12.2f %-15.2f\n",
                fila.periodo,

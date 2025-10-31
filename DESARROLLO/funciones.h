@@ -1,7 +1,6 @@
 #ifndef FUNCIONES_H_INCLUDED
 #define FUNCIONES_H_INCLUDED
 
-#include <stdbool.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -14,6 +13,8 @@
 #define TODO_OK 1
 #define ERR_ARCHIVO 2
 #define SIN_MEM 3
+#define TRUE 1
+#define FALSE 0
 
 #define FILTRO_DESCRIPCION_ALQUILER "Alquiler de la vivienda"
 #define ARCHIVO_BINARIO_SALIDA "tabla_alquileres.dat"
@@ -27,13 +28,13 @@ typedef struct {
     char variacion_mensual[17];
     char variacion_interanual[17];
     char region[10];
-    char periodo[21];   // AAAAMM
+    char periodo[21];   
 } RegistroIPC;
 
 typedef struct {
     char fecha[30];
     char descripcion[128];
-    int periodo;   // AAAAMM
+    int periodo;   
     double indice_ipc;
     char region[64];
     char grupo[32];
@@ -47,33 +48,31 @@ typedef struct {
 } Vector;
 
 typedef struct {
-    char periodo[8]; // Formato "YYYY-MM"
+    char periodo[8];
     double indice;
     double variacionPct;
     double montoAjustado;
 } FilaTablaAlquiler;
 
 
-// Convención nombre de funciones : primer palabra en minuscula, la siguiente empiezan con mayuscula.
-
 void limpiarCampo(char *campo);
 void mostrarPalabra(const char *p);
-bool leerRegistroIPC(char* nomArch, RegistroIPC* reg);
-bool leerArchivoCompletoIPC(char* nomArch);
-bool trozarLineaDivisiones(char buffer[], RegistroIPC *registro);
-bool trozarLineaAperturas(char linea[], RegistroIPC *registro);
+int leerRegistroIPC(char* nomArch, RegistroIPC* reg);
+int leerArchivoCompletoIPC(char* nomArch);
+int trozarLineaDivisiones(char buffer[], RegistroIPC *registro);
+int trozarLineaAperturas(char linea[], RegistroIPC *registro);
 
 int actualizarArchivoDivisiones(const char* nomArchDivisiones,const char* nomArchTemporal);
-//1
+/*1*/
 char decodificarDigito(char c);
 void decodificarFecha(char* fechaE);
-//2
+/*2*/
 void convertirFecha(char* fecha);
-//3
+/*3*/
 void normalizarDescripcion(char *p);
-//4
+/*4*/
 void convertirComaAPunto(char *p);
-//5
+/*5*/
 void calcularMontoAjustadoPorIPC(const char* nomArchivoIpc);
 
 void solicitarMonto(float *monto);
@@ -82,24 +81,24 @@ void solicitarFecha(int *fecha_inicio);
 
 int convertirFechaStringAInt(const char *fechaFormateada);
 int obtenerNumeroMes(const char *mesTexto);
-//6
+/*6*/
 void calcularIPCPorGrupos(const char* nomArchivo_ipc, Vector* grupos);
 int compararClasificacionPorPeriodo(const void* a, const void* b);
 void mostrarPromedios(Vector* vec);
 void clasificarGrupo(const char* descripcion, char *grupo);
 
 int actualizarArchivoAperturas(const char* nomArchAper,const char* nomArchAperTemp);
-//7
+/*7*/
 void convertirFormatoFecha(char *periodo);
-//8 Funcion4
-//9
+/*8 Funcion4*/
+/*9*/
 void calcularAjusteAlquiler(const char* nomArchAperturas);
 void leerMostrarTablaBinario(const char*);
 
 
-bool redimensionarVector(Vector* vec, double factorInc);
+int redimensionarVector(Vector* vec, double factorInc);
 int vectorCrear(Vector* vector, size_t tamElem);
 void vectorDestruir(Vector* vec);
 int vectorInsertar(Vector* vec, void* elem);
-#endif // FUNCIONES_H_INCLUDED
+#endif /* FUNCIONES_H_INCLUDED*/
 
