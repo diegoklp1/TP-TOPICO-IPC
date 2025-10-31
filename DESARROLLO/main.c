@@ -28,6 +28,7 @@ int main() {
     {
         printf("\nCALCULAR AJUSTE ALQUILER\n");
         calcularAjusteAlquiler("serie_ipc_aperturas.csv");
+        leerMostrarTablaBinario(ARCHIVO_BINARIO_SALIDA);
     }
     return 0;
 }

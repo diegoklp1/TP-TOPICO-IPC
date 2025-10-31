@@ -15,6 +15,10 @@
 #define ERR_ARCHIVO 2
 #define SIN_MEM 3
 
+#define FILTRO_DESCRIPCION_ALQUILER "Alquiler de la vivienda"
+#define ARCHIVO_BINARIO_SALIDA "tabla_alquileres.dat"
+#define MAX_MESES_REPORTE 500
+
 typedef struct {
     char codigo[32];
     char descripcion[100];

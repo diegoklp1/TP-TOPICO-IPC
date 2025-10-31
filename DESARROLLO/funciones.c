@@ -1,9 +1,6 @@
 #include "funciones.h"
 
-#define FILENAME_APERTURAS "serie_ipc_aperturas.csv"
-#define FILTRO_DESCRIPCION_ALQUILER "Alquiler de la vivienda"
-#define ARCHIVO_BINARIO_SALIDA "tabla_alquileres.dat"
-#define MAX_MESES_REPORTE 500
+
 
 void limpiarCampo(char *campo) {
     int len = strlen(campo);
@@ -755,12 +752,6 @@ void calcularAjusteAlquiler(const char* nomArchAperturas) {
         return;
     }
 
-
-    //printf("\n--- Detalle Mes a Mes ---\n");
-    //printf("-----------------------------------------------------------\n");
-    //printf("%-10s %-12s %-12s %-15s\n", "Periodo", "Indice", "Variacion %", "Monto ajustado");
-    //printf("-----------------------------------------------------------\n");
-
     FilaTablaAlquiler fila;
 
     //Iterar sobre los registros guardados para generar la tabla
@@ -779,7 +770,6 @@ void calcularAjusteAlquiler(const char* nomArchAperturas) {
     }
 
     fclose(archivo_binario);
-    leerMostrarTablaBinario(ARCHIVO_BINARIO_SALIDA);
 }
 void leerMostrarTablaBinario(const char* nombreArchivo) {
     FILE* archivo = fopen(nombreArchivo, "rb");
